@@ -1,0 +1,134 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# h2 CLI
+#
+# ---
+
+require 'colored'
+require 'optparse'
+
+$: << File.expand_path('../../../http-2/lib', __FILE__)
+
+begin # {{{
+  require 'h2'
+rescue LoadError
+  $: << File.expand_path('../../lib', __FILE__)
+  require 'h2'
+end # }}}
+
+# --- parse options {{{
+
+options = {
+  body: nil,
+  block: false,
+  headers: {},
+  goaway: false,
+  method: nil,
+  tls: {},
+  verbose: false
+}
+
+OptionParser.new do |o|
+
+  o.banner = 'Usage: h2 [options] URL'
+
+  o.on '-b', '--block', 'block until server closes connection' do
+    options[:block] = true
+  end
+
+  o.on '--cafile [FILE]', String, 'certificate authority bundle' do |ca|
+    raise ArgumentError, "invalid CA file: #{ca}" unless ca && File.exist?(ca)
+    options[:tls][:ca_file] = ca
+  end
+
+  o.on '-d', '--data [DATA]', String, 'post body data' do |d|
+    options[:method] = :post if options[:method].nil?
+    options[:body] = d
+  end
+
+  o.on '--debug', 'debug output' do
+    options[:debug] = true
+  end
+
+  o.on '-g', '--goaway', 'send GOAWAY frame when stream is complete' do
+    options[:debug] = true
+  end
+
+  o.on '-v', '--verbose', 'turn on verbosity' do
+    options[:verbose] = true
+  end
+
+  o.on '-X', '--request [METHOD]', String, 'request method' do |m|
+    meth = m.downcase.to_sym
+    raise ArgumentError, "invalid method: #{m}" unless H2::REQUEST_METHODS.include? meth
+    options[:method] = meth
+  end
+
+end.parse!
+
+options[:method] ||= :get
+options[:tls][:ca_file] ||= ENV['H2_CAFILE'] if ENV['H2_CAFILE']
+
+# }}}
+
+# --- parse URL {{{
+
+url = ARGV[0]
+url = 'https://' + url unless url.start_with? 'http'
+url = URI.parse url
+
+# }}}
+
+# --- build & connect client {{{
+
+client = {
+  url: url
+}
+
+client[:tls] = options[:tls] unless options[:tls].empty?
+
+c = H2::Client.new **client do |c|
+  if options[:debug]
+    c.client.on(:frame_received) {|f| puts "<< #{f.inspect}".yellow}
+    c.client.on(:frame_sent)     {|f| puts ">> #{f.inspect}".green}
+  end
+end
+
+# }}}
+
+# --- build & send request {{{
+
+request = {
+  body: options[:body],
+  headers: options[:headers],
+  path: url.request_uri
+}
+
+if options[:verbose]
+  c.build_headers(
+    method: options[:method],
+    path: url.request_uri,
+    headers: request[:headers]
+  ).each {|k,v| puts ">> #{k}: #{v}".green}
+end
+
+s = c.__send__ options[:method], **request
+
+# }}}
+
+# --- print response & close {{{
+
+if options[:verbose]
+  s.headers.each {|k,v| puts "<< #{k}: #{v}".yellow}
+end
+
+puts s.body
+
+c.goaway if options[:goaway]
+c.block! if options[:block]
+c.close
+
+# }}}
+
+# vim: ft=ruby fdm=marker fdl=0

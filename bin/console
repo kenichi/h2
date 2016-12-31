@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'h2'
+require 'irb'
+
+Bundler.require :development
+IRB.start
