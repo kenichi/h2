@@ -1,6 +1,8 @@
 # H2
 
-H2 is a basic HTTP/2 client based on the [http-2](https://github.com/igrigorik/http-2) gem.
+[![Build Status](https://travis-ci.org/kenichi/h2.svg?branch=master)](https://travis-ci.org/kenichi/h2)
+
+H2 is a basic, _experimental_ HTTP/2 client based on the [http-2](https://github.com/igrigorik/http-2) gem.
 
 H2 currently uses:
 
@@ -73,11 +75,11 @@ client.goaway!
 * [x] HTTPS / TLS
 * [ ] push promise cancellation
 * [ ] alternate concurrency models
+* [ ] fix up CLI
 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/kenichi/h2. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
-
 
 ## License
 
