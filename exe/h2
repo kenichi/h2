@@ -22,6 +22,7 @@ end # }}}
 options = {
   body: nil,
   block: false,
+  debug: false,
   headers: {},
   goaway: false,
   method: nil,
@@ -52,7 +53,7 @@ OptionParser.new do |o|
   end
 
   o.on '-g', '--goaway', 'send GOAWAY frame when stream is complete' do
-    options[:debug] = true
+    options[:goaway] = true
   end
 
   o.on '-v', '--verbose', 'turn on verbosity' do
@@ -64,6 +65,7 @@ OptionParser.new do |o|
     raise ArgumentError, "invalid method: #{m}" unless H2::REQUEST_METHODS.include? meth
     options[:method] = meth
   end
+
 
 end.parse!
 

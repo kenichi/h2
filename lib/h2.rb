@@ -2,6 +2,7 @@
 
 require 'http/2'
 require 'uri'
+require 'h2/version'
 
 module H2
 
@@ -12,6 +13,10 @@ module H2
   PATH_KEY      = ':path'
   SCHEME_KEY    = ':scheme'
   STATUS_KEY    = ':status'
+
+  USER_AGENT = {
+    'user-agent' => "h2/#{H2::VERSION} #{RUBY_ENGINE}-#{RUBY_VERSION}/#{RUBY_PLATFORM}"
+  }
 
   REQUEST_METHODS = [
     :get,
@@ -92,4 +97,3 @@ end
 
 require 'h2/client'
 require 'h2/stream'
-require 'h2/version'

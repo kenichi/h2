@@ -49,8 +49,8 @@ module H2
     end
 
     def cancel!
-      unblock!
       @stream.cancel
+      unblock!
     end
 
     def block! timeout = nil

@@ -13,11 +13,6 @@ module H2
       :promise
     ]
 
-    PROMISE_EVENTS = [
-      :headers,
-      :data
-    ]
-
     ALPN_PROTOCOLS = ['h2']
     DEFAULT_MAXLEN = 4096
 
@@ -112,17 +107,16 @@ module H2
         METHOD_KEY    => method.to_s.upcase,
         PATH_KEY      => path,
         SCHEME_KEY    => @scheme
-      }
+      }.merge USER_AGENT
       h.merge! stringify_headers(headers)
     end
 
     def add_stream method:, path:, stream:, &block
-      stream_id = stream.id
       @streams[method] ||= {}
       @streams[method][path] ||= []
       stream = Stream.new client: self, stream: stream, &block unless Stream === stream
       @streams[method][path] << stream
-      @streams[stream_id] = stream
+      @streams[stream.id] = stream
       stream
     end
 
@@ -143,12 +137,6 @@ module H2
           main.raise e
         end
       end
-    rescue => e
-      STDERR.puts "#{e.message} - closing socket"
-      STDERR.puts e.backtrace.map {|l| "\t" + l}
-      close
-    ensure
-      unblock!
     end
 
     def _read maxlen = DEFAULT_MAXLEN
@@ -214,18 +202,18 @@ module H2
     end
 
     def on_promise promise
-      on :promise, promise
-
-      Stream.new client: self,
-                 parent: @streams[promise.parent.id],
-                 push: true,
-                 stream: promise do |p|
+      push_promise = Stream.new client: self,
+                                parent: @streams[promise.parent.id],
+                                push: true,
+                                stream: promise do |p|
         p.on :close do
           method = p.headers[METHOD_KEY].downcase.to_sym rescue :error
           path = p.headers[PATH_KEY]
           add_stream method: method, path: path, stream: p
         end
       end
+
+      on :promise, push_promise
     end
 
     # ---
