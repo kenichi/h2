@@ -1,6 +1,10 @@
 h2 changelog
 ============
 
+### 0.3.0 10 may 2017
+
+* update http-2 gem version >= 0.8.4 for window update state fix
+
 ### 0.2.0 7 mar 2017
 
 * add concurrency alternates
