@@ -36,7 +36,7 @@ module H2
             go = with_reel_test.verify headers: stream.request.headers,
                                        body: stream.request.body
             stream.respond :ok
-            stream.connection.goaway if go
+            connection.goaway if go
           end
         end
       end

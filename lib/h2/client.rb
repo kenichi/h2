@@ -1,4 +1,5 @@
 require 'openssl'
+require 'resolv'
 require 'h2/client/tcp_socket'
 
 module H2
@@ -13,8 +14,10 @@ module H2
       :promise
     ]
 
-    ALPN_PROTOCOLS = ['h2']
-    DEFAULT_MAXLEN = 4096
+    ALPN_OPENSSL_MIN_VERSION = 0x10002001
+    ALPN_PROTOCOLS           = ['h2']
+    DEFAULT_MAXLEN           = 4096
+    RE_IP_ADDR               = Regexp.union Resolv::IPv4::Regex, Resolv::IPv6::Regex
 
     attr_accessor :last_stream
     attr_reader :client, :reader, :scheme, :socket, :streams
@@ -221,7 +224,7 @@ module H2
     def tls_socket socket
       socket = OpenSSL::SSL::SSLSocket.new socket, create_ssl_context
       socket.sync_close = true
-      socket.hostname = @addr
+      socket.hostname = @addr unless RE_IP_ADDR.match(@addr)
       socket.connect
       socket
     end
@@ -230,7 +233,6 @@ module H2
     #
     def create_ssl_context
       ctx                = OpenSSL::SSL::SSLContext.new
-      ctx.alpn_protocols = ALPN_PROTOCOLS
       ctx.ca_file        = @tls[:ca_file] if @tls[:ca_file]
       ctx.ca_path        = @tls[:ca_path] if @tls[:ca_path]
       ctx.ciphers        = @tls[:ciphers] || OpenSSL::SSL::SSLContext::DEFAULT_PARAMS[:ciphers]
@@ -238,7 +240,18 @@ module H2
       ctx.ssl_version    = :TLSv1_2
       ctx.verify_mode    = @tls[:verify_mode] || ( OpenSSL::SSL::VERIFY_PEER |
                                                    OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT )
+      set_ssl_context_protocols ctx
       ctx
+    end
+
+    if OpenSSL::OPENSSL_VERSION_NUMBER >= ALPN_OPENSSL_MIN_VERSION
+      def set_ssl_context_protocols ctx
+        ctx.alpn_protocols = ALPN_PROTOCOLS
+      end
+    else
+      def set_ssl_context_protocols ctx
+        ctx.npn_protocols = ALPN_PROTOCOLS
+      end
     end
 
   end
