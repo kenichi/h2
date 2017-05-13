@@ -4,9 +4,16 @@ class H2::Client::TLSTest < Minitest::Test
 
   def create_ssl_context
     ctx                = OpenSSL::SSL::SSLContext.new
-    ctx.alpn_protocols = ['h2']
-    ctx.alpn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
     ctx.ssl_version    = :TLSv1_2
+
+    if OpenSSL::OPENSSL_VERSION_NUMBER >= H2::Client::ALPN_OPENSSL_MIN_VERSION
+      ctx.alpn_protocols = ['h2']
+      ctx.alpn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
+    else
+      ctx.npn_protocols = ['h2']
+      ctx.npn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
+    end
+
     ctx
   end
 
