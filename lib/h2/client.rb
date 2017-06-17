@@ -275,10 +275,6 @@ module H2
 
     module ExceptionlessIO
 
-      def self.prepended base
-        puts "prepending ExceptionlessIO to #{base}"
-      end
-
       def read_from_socket maxlen
         @socket.read_nonblock maxlen, exception: false
       end

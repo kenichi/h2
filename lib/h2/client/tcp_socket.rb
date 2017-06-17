@@ -53,10 +53,6 @@ module H2
 
       module ExceptionlessIO
 
-        def self.prepended base
-          puts "prepending ExceptionlessIO to #{base}"
-        end
-
         def _connect
           connect_nonblock(@_sockaddr, exception: false)
         end

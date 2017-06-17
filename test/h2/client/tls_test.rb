@@ -6,12 +6,14 @@ class H2::Client::TLSTest < Minitest::Test
     ctx             = OpenSSL::SSL::SSLContext.new
     ctx.ssl_version = :TLSv1_2
 
-    if H2.alpn?
-      ctx.alpn_protocols = ['h2']
-      ctx.alpn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
-    else
-      ctx.npn_protocols = ['h2']
-      ctx.npn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
+    unless H2.jruby?
+      if H2.alpn?
+        ctx.alpn_protocols = ['h2']
+        ctx.alpn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
+      else
+        ctx.npn_protocols = ['h2']
+        ctx.npn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
+      end
     end
 
     ctx
