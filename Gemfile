@@ -12,6 +12,7 @@ end
 
 group :development, :test do
   gem 'awesome_print'
-  gem 'pry-byebug'
-  gem 'reel', require: 'reel/h2', git: 'https://github.com/kenichi/reel', branch: 'h2'
+  gem 'guard-rake'
+  gem 'pry-byebug', platforms: [:mri]
+  gem 'reel', require: 'reel/h2', git: 'https://github.com/kenichi/reel', branch: 'rebase_h2'
 end

@@ -1,6 +1,14 @@
 h2 changelog
 ============
 
+### 0.4.0 17 jun 2017
+
+* downgrade required ruby version to 2.2
+* update .travis.yml for latest supported versions
+* refactor exceptionless IO handling to prepended modules
+* refactor On#on for lack of safe-nil operator
+* refactor SSL context handling for 2.2/jruby
+
 ### 0.3.1 13 may 2017
 
 * `servername` should not be set on client socket when IP address (#1)

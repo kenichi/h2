@@ -86,9 +86,14 @@ module H2
 
     def on event, *args, &block
       @on ||= {}
-      return @on[event]&.call(*args) unless block_given?
-      return @on[event] = block if block_given?
-      self
+      event_handler = @on[event]
+      if block_given?
+        @on[event] = block
+        self
+      else
+        return if event_handler.nil?
+        return event_handler.call(*args)
+      end
     end
 
   end

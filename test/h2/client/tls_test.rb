@@ -3,10 +3,10 @@ require File.expand_path '../../../test_helper', __FILE__
 class H2::Client::TLSTest < Minitest::Test
 
   def create_ssl_context
-    ctx                = OpenSSL::SSL::SSLContext.new
-    ctx.ssl_version    = :TLSv1_2
+    ctx             = OpenSSL::SSL::SSLContext.new
+    ctx.ssl_version = :TLSv1_2
 
-    if OpenSSL::OPENSSL_VERSION_NUMBER >= H2::Client::ALPN_OPENSSL_MIN_VERSION
+    if H2.alpn?
       ctx.alpn_protocols = ['h2']
       ctx.alpn_select_cb = ->(ps){ ps.find { |p| 'h2' == p }}
     else

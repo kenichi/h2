@@ -14,7 +14,6 @@ module H2
       :promise
     ]
 
-    ALPN_OPENSSL_MIN_VERSION = 0x10002001
     ALPN_PROTOCOLS           = ['h2']
     DEFAULT_MAXLEN           = 4096
     RE_IP_ADDR               = Regexp.union Resolv::IPv4::Regex, Resolv::IPv6::Regex
@@ -131,6 +130,10 @@ module H2
 
     # ---
 
+    def selector
+      @selector ||= [@socket]
+    end
+
     def read maxlen = DEFAULT_MAXLEN
       main = Thread.current
       @reader = Thread.new do
@@ -145,10 +148,9 @@ module H2
     def _read maxlen = DEFAULT_MAXLEN
       begin
         data = nil
-        selector = [@socket]
 
         loop do
-          data = @socket.read_nonblock maxlen, exception: false
+          data = read_from_socket maxlen
           case data
           when :wait_readable
             IO.select selector
@@ -171,6 +173,12 @@ module H2
       end
     end
 
+    def read_from_socket maxlen
+      @socket.read_nonblock maxlen
+    rescue IO::WaitReadable
+      :wait_readable
+    end
+
     # ---
 
     def on_close
@@ -184,7 +192,7 @@ module H2
       if ::H2::Client::TCPSocket === @socket
         total = bytes.bytesize
         loop do
-          n = @socket.sendmsg_nonblock bytes, exception: false
+          n = write_to_socket bytes
           if n == :wait_writable
             IO.select nil, @socket.selector
           elsif n < total
@@ -197,6 +205,12 @@ module H2
         @socket.write bytes
       end
       @socket.flush
+    end
+
+    def write_to_socket bytes
+      @socket.write_nonblock bytes
+    rescue IO::WaitWritable
+      :wait_writable
     end
 
     def on_goaway *args
@@ -240,11 +254,14 @@ module H2
       ctx.ssl_version    = :TLSv1_2
       ctx.verify_mode    = @tls[:verify_mode] || ( OpenSSL::SSL::VERIFY_PEER |
                                                    OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT )
-      set_ssl_context_protocols ctx
+
+      # https://github.com/jruby/jruby-openssl/issues/99
+      set_ssl_context_protocols ctx unless H2.jruby?
+
       ctx
     end
 
-    if OpenSSL::OPENSSL_VERSION_NUMBER >= ALPN_OPENSSL_MIN_VERSION
+    if H2.alpn?
       def set_ssl_context_protocols ctx
         ctx.alpn_protocols = ALPN_PROTOCOLS
       end
@@ -253,6 +270,26 @@ module H2
         ctx.npn_protocols = ALPN_PROTOCOLS
       end
     end
+
+    # ---
+
+    module ExceptionlessIO
+
+      def self.prepended base
+        puts "prepending ExceptionlessIO to #{base}"
+      end
+
+      def read_from_socket maxlen
+        @socket.read_nonblock maxlen, exception: false
+      end
+
+      def write_to_socket bytes
+        @socket.write_nonblock bytes, exception: false
+      end
+
+    end
+
+    prepend ExceptionlessIO if H2.exceptionless_io?
 
   end
 end
