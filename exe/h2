@@ -66,6 +66,10 @@ OptionParser.new do |o|
     options[:method] = meth
   end
 
+  o.on '--version', 'print version information' do
+    puts "#{H2::USER_AGENT['user-agent']} using http-2-#{HTTP2::VERSION}"
+    exit
+  end
 
 end.parse!
 
