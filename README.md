@@ -75,6 +75,20 @@ For more info on using the CLI `h2` installed with this gem:
 
 `$ h2 --help`
 
+## TLS CA Certificates
+
+If you're running on macOS and using Homebrew's openssl package, you may need to
+specify the CA file in the TLS options:
+
+```ruby
+client = H2::Client.new addr: 'example.com', port: 443, tls: { ca_file: '/usr/local/etc/openssl/cert.pem' }
+```
+
+or when using the CLI:
+
+`$ h2 --cafile /usr/local/etc/openssl/cert.pem https://example.com/`
+
+
 ## Alternate Concurrency Models
 
 Right now, h2 uses one new thread per connection. This is hardly ideal, so a
