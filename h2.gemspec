@@ -6,8 +6,8 @@ Gem::Specification.new do |spec|
   spec.version       = H2::VERSION
   spec.authors       = ["Kenichi Nakamura"]
   spec.email         = ["kenichi.nakamura@gmail.com"]
-  spec.summary       = 'an http/2 client based on http-2 and modern ruby'
-  spec.description   = 'a pure ruby http/2 client based on http-2 for ruby 2.2 and above'
+  spec.summary       = 'an http/2 client based on http-2'
+  spec.description   = 'a pure ruby http/2 client based on http-2'
   spec.homepage      = 'https://github.com/kenichi/h2'
   spec.license       = 'MIT'
   spec.bindir        = 'exe'

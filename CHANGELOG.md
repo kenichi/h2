@@ -1,6 +1,12 @@
 h2 changelog
 ============
 
+### 0.4.1 16 jun 2017
+
+* update .travis.yml for latest supported versions
+* add CLI flags for threading model
+* update for http-2-0.9.x (`:promise_headers`)
+
 ### 0.4.0 17 jun 2017
 
 * downgrade required ruby version to 2.2

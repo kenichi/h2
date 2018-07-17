@@ -43,6 +43,14 @@ OptionParser.new do |o|
     options[:tls][:ca_file] = ca
   end
 
+  o.on '--celluloid', 'use celluloid actor pool' do
+    require 'h2/client/celluloid'
+  end
+
+  o.on '--concurrent', 'use concurrent-ruby thread pool' do
+    require 'h2/client/concurrent'
+  end
+
   o.on '-d', '--data [DATA]', String, 'post body data' do |d|
     options[:method] = :post if options[:method].nil?
     options[:body] = d

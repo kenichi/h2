@@ -29,5 +29,3 @@ module H2
     prepend H2::Client::Celluloid
   end
 end
-
-

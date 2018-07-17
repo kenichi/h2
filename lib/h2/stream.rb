@@ -77,16 +77,21 @@ module H2
         on :close
       end
 
-      @stream.on(:headers) do |h|
-        h = Hash[h]
-        on :headers, h
-        @headers.merge! h
-      end
+      ah = method :add_headers
+      @stream.on :promise_headers, &ah
+      @stream.on :headers, &ah
 
       @stream.on(:data) do |d|
         on :data, d
         @body << d
       end
+    end
+
+    def add_headers h
+      h = Hash[h]
+      on :headers, h
+      @headers.merge! h
+      @headers
     end
 
     def to_h

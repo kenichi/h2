@@ -7,10 +7,11 @@ module H2
 
       module ClassMethods
         def thread_pool
+          return @thread_pool if @thread_pool
           procs = ::Concurrent.processor_count
-          @thread_pool ||= ::Concurrent::ThreadPoolExecutor.new min_threads: 0,
-                                                                max_threads: procs,
-                                                                max_queue:   procs * 5
+          @thread_pool = ::Concurrent::ThreadPoolExecutor.new min_threads: 0,
+                                                              max_threads: procs,
+                                                              max_queue:   procs * 5
         end
       end
 
@@ -31,4 +32,3 @@ module H2
     prepend H2::Client::Concurrent
   end
 end
-
