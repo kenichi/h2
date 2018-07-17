@@ -31,16 +31,18 @@ class H2::Client::TLSTest < Minitest::Test
     assert flag, 'servername_cb should not have been called!'
   end
 
-  def test_servname_not_set_when_ipv6_addr
-    flag = true
-    ctx = create_ssl_context
-    ctx.servername_cb = ->(_){ flag = false }
-    tcp_server = TCPServer.new '::1', 45670
-    server = OpenSSL::SSL::SSLServer.new tcp_server, ctx
-    st = Thread.new { c = server.accept rescue nil }
-    H2::Client.new addr: '::1', port: 45670 rescue nil
-    server.close
-    assert flag, 'servername_cb should not have been called!'
+  unless ENV['TRAVIS'] == 'true'
+    def test_servname_not_set_when_ipv6_addr
+      flag = true
+      ctx = create_ssl_context
+      ctx.servername_cb = ->(_){ flag = false }
+      tcp_server = TCPServer.new '::1', 45670
+      server = OpenSSL::SSL::SSLServer.new tcp_server, ctx
+      st = Thread.new { c = server.accept rescue nil }
+      H2::Client.new addr: '::1', port: 45670 rescue nil
+      server.close
+      assert flag, 'servername_cb should not have been called!'
+    end
   end
 
 end

@@ -21,11 +21,13 @@ class H2::Client::TCPSocketTest < Minitest::Test
     end
   end
 
-  def test_ipv6
-    with_socket_pair addr: '::1' do |peer, client|
-      refute client.closed?
-      assert client.local_address.ipv6?
-      assert_equal ::Socket::AF_INET6, client.local_address.afamily
+  unless ENV['TRAVIS'] == 'true'
+    def test_ipv6
+      with_socket_pair addr: '::1' do |peer, client|
+        refute client.closed?
+        assert client.local_address.ipv6?
+        assert_equal ::Socket::AF_INET6, client.local_address.afamily
+      end
     end
   end
 
