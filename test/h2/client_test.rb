@@ -1,6 +1,6 @@
 require File.expand_path '../../test_helper', __FILE__
 
-class H2::ClientTest < H2::WithReelTest
+class H2::ClientTest < H2::WithServerTest
 
   def count_hash count: 5, enum: H2::REQUEST_METHODS
     @mutex.synchronize do

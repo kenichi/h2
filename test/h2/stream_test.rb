@@ -1,6 +1,6 @@
 require File.expand_path '../../test_helper', __FILE__
 
-class H2::StreamTest < H2::WithReelTest
+class H2::StreamTest < H2::WithServerTest
 
   def test_basic_stream
     @stream = @client.get path: '/'

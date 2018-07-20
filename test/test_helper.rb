@@ -2,18 +2,21 @@ $:.unshift File.expand_path '../../lib', __FILE__
 $:.unshift File.expand_path '..', __FILE__
 
 require 'bundler/setup'
+require 'celluloid/current'
 Bundler.require :default, :test
 
 require 'minitest/autorun'
 require 'minitest/pride'
 
+require 'h2/server'
+
 Thread.abort_on_exception = true
-Reel::Logger.logger.level = ::Logger::FATAL
-# Reel::Logger.logger.level = ::Logger::DEBUG
-# Reel::H2.verbose!
+H2::Logger.level = ::Logger::FATAL
+# H2::Logger.level = ::Logger::DEBUG
+# H2.verbose!
 
 module H2
-  class WithReelTest < Minitest::Test
+  class WithServerTest < Minitest::Test
 
     attr_accessor :handler
 
@@ -28,7 +31,7 @@ module H2
       @port = 45670
       with_reel_test = self
 
-      @server = Reel::H2::Server::HTTP.new host: @addr, port: @port do |connection|
+      @server = H2::Server::HTTP.new host: @addr, port: @port do |connection|
         connection.each_stream do |stream|
           if with_reel_test.handler
             with_reel_test.handler[stream]

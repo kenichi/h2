@@ -14,5 +14,5 @@ group :development, :test do
   gem 'awesome_print'
   gem 'guard-rake'
   gem 'pry-byebug', platforms: [:mri]
-  gem 'reel', require: 'reel/h2', git: 'https://github.com/kenichi/reel', branch: 'h2'
+  gem 'reel', '0.6.1'
 end

@@ -2,14 +2,14 @@
 
 [![Build Status](https://travis-ci.org/kenichi/h2.svg?branch=master)](https://travis-ci.org/kenichi/h2)
 
-H2 is a basic, _experimental_ HTTP/2 client based on the [http-2](https://github.com/igrigorik/http-2) gem.
+H2 is an HTTP/2 client and server based on the [http-2](https://github.com/igrigorik/http-2) gem.
 
 H2 uses:
 
 * keyword arguments (>=2.0)
 * exception-less socket IO (>=2.3).
 
-## Usage
+## Client Usage
 
 ```ruby
 require 'h2'
@@ -69,13 +69,13 @@ end
 client.goaway!
 ```
 
-## CLI
+## Client CLI
 
 For more info on using the CLI `h2` installed with this gem:
 
 `$ h2 --help`
 
-## TLS CA Certificates
+## Using TLS CA Certificates with the Client
 
 If you're running on macOS and using Homebrew's openssl package, you may need to
 specify the CA file in the TLS options:
@@ -101,7 +101,7 @@ Neither of these gems are hard dependencies. If you want to use either one, you 
 have it available to your Ruby VM, most likely via Bundler, *and* require the
 sub-component of h2 that will prepend and extend `H2::Client`. They are also intended
 to be mutually exclusive: you can have both in your VM, but you can only use one at a
-time with h2.
+time with h2's client.
 
 #### Celluloid Pool
 
@@ -131,12 +131,31 @@ max_threads: procs,
 max_queue:   procs * 5
 ```
 
+## Server Usage
+
+```ruby
+require 'h2/server'
+
+#
+# --- hello, world!
+#
+
+client.closed? #=> true
+s = H2::Server::HTTP.new host: addr, port: port do |connection|
+  connection.each_stream do |stream|
+    stream.respond :ok, "hello, world!\n"
+    stream.connection.goaway
+  end
+end
+```
+
 ## TODO
 
 * [x] HTTPS / TLS
 * [x] push promise cancellation
 * [x] alternate concurrency models
 * [ ] fix up CLI to be more curlish
+* [ ] update server API
 
 ## Contributing
 
