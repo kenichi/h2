@@ -2,14 +2,36 @@
 
 [![Build Status](https://travis-ci.org/kenichi/h2.svg?branch=master)](https://travis-ci.org/kenichi/h2)
 
-H2 is a basic, _experimental_ HTTP/2 client based on the [http-2](https://github.com/igrigorik/http-2) gem.
+H2 is an HTTP/2 client and server based on the [http-2](https://github.com/igrigorik/http-2) gem.
 
 H2 uses:
 
 * keyword arguments (>=2.0)
 * exception-less socket IO (>=2.3).
 
-## Usage
+## Server Usage
+
+Server API is currently optional, and must be required separately. The server
+uses [Reel](https://github.com/celluloid/reel), but since this API is optional,
+reel must be separately added to `Gemfile`. It is currently based on `reel-0.6.1`.
+
+```ruby
+require 'h2/server'
+
+server = H2::Server::HTTP.new host: addr, port: port do |connection|
+  connection.each_stream do |stream|
+    stream.respond :ok, "hello, world!\n"
+    stream.connection.goaway
+  end
+end
+
+stream = H2.get url: "http://#{addr}:#{port}", tls: false
+stream.body #=> "hello, world!\n"
+```
+
+See [examples](https://github.com/kenichi/h2/tree/master/examples/server/)
+
+## Client Usage
 
 ```ruby
 require 'h2'
@@ -44,10 +66,10 @@ stream.closed? #=> true
 
 client.closed? #=> false unless server sent GOAWAY
 
-stream = client.get path: '/push_promise' do |s| # H2::Stream === s
-  s.on :headers do |h|
-    if h['ETag'] == 'some_value']
-      s.cancel! # already have 
+client.on :promise do |p| # check/cancel a promise
+  p.on :headers do |h|
+    if h['etag'] == 'some_value'
+      p.cancel!  # already have 
     end
   end
 end
@@ -69,13 +91,13 @@ end
 client.goaway!
 ```
 
-## CLI
+## Client CLI
 
 For more info on using the CLI `h2` installed with this gem:
 
 `$ h2 --help`
 
-## TLS CA Certificates
+## Using TLS CA Certificates with the Client
 
 If you're running on macOS and using Homebrew's openssl package, you may need to
 specify the CA file in the TLS options:
@@ -101,7 +123,7 @@ Neither of these gems are hard dependencies. If you want to use either one, you 
 have it available to your Ruby VM, most likely via Bundler, *and* require the
 sub-component of h2 that will prepend and extend `H2::Client`. They are also intended
 to be mutually exclusive: you can have both in your VM, but you can only use one at a
-time with h2.
+time with h2's client.
 
 #### Celluloid Pool
 
@@ -112,6 +134,10 @@ require 'h2/client/celluloid'
 ```
 
 This will lazily fire up a celluloid pool, with defaults defined by Celluloid.
+
+NOTE: if you've added reel and required the 'h2/server' API, Celluloid will be
+loaded in your Ruby VM already; however, you must still require this to have
+the client use Celluloid actor pools.
 
 #### Concurrent-Ruby ThreadPoolExecutor
 
@@ -137,6 +163,7 @@ max_queue:   procs * 5
 * [x] push promise cancellation
 * [x] alternate concurrency models
 * [ ] fix up CLI to be more curlish
+* [ ] update server API
 
 ## Contributing
 
