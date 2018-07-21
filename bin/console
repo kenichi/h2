@@ -3,6 +3,7 @@
 require 'bundler/setup'
 require 'h2'
 require 'irb'
+require 'celluloid/current'
 
 Bundler.require :development
 IRB.start

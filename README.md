@@ -9,6 +9,28 @@ H2 uses:
 * keyword arguments (>=2.0)
 * exception-less socket IO (>=2.3).
 
+## Server Usage
+
+Server API is currently optional, and must be required separately. The server
+uses [Reel](https://github.com/celluloid/reel), but since this API is optional,
+reel must be separately added to `Gemfile`. It is currently based on `reel-0.6.1`.
+
+```ruby
+require 'h2/server'
+
+server = H2::Server::HTTP.new host: addr, port: port do |connection|
+  connection.each_stream do |stream|
+    stream.respond :ok, "hello, world!\n"
+    stream.connection.goaway
+  end
+end
+
+stream = H2.get url: "http://#{addr}:#{port}", tls: false
+stream.body #=> "hello, world!\n"
+```
+
+See [examples](https://github.com/kenichi/h2/tree/master/examples/server/)
+
 ## Client Usage
 
 ```ruby
@@ -44,10 +66,10 @@ stream.closed? #=> true
 
 client.closed? #=> false unless server sent GOAWAY
 
-stream = client.get path: '/push_promise' do |s| # H2::Stream === s
-  s.on :headers do |h|
-    if h['ETag'] == 'some_value']
-      s.cancel! # already have 
+client.on :promise do |p| # check/cancel a promise
+  p.on :headers do |h|
+    if h['etag'] == 'some_value'
+      p.cancel!  # already have 
     end
   end
 end
@@ -129,24 +151,6 @@ procs = ::Concurrent.processor_count
 min_threads: 0,
 max_threads: procs,
 max_queue:   procs * 5
-```
-
-## Server Usage
-
-```ruby
-require 'h2/server'
-
-#
-# --- hello, world!
-#
-
-client.closed? #=> true
-s = H2::Server::HTTP.new host: addr, port: port do |connection|
-  connection.each_stream do |stream|
-    stream.respond :ok, "hello, world!\n"
-    stream.connection.goaway
-  end
-end
 ```
 
 ## TODO
