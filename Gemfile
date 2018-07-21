@@ -12,6 +12,7 @@ end
 
 group :development, :test do
   gem 'awesome_print'
+  gem 'certificate_authority'
   gem 'guard-rake'
   gem 'pry-byebug', platforms: [:mri]
   gem 'reel', '0.6.1'

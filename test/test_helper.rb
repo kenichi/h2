@@ -16,6 +16,7 @@ H2::Logger.level = ::Logger::FATAL
 # H2.verbose!
 
 module H2
+
   class WithServerTest < Minitest::Test
 
     attr_accessor :handler
@@ -63,6 +64,51 @@ module H2
     end
 
   end
+
+  module MockStream
+    def stream
+      s = Minitest::Mock.new
+      H2::Server::Stream::STREAM_EVENTS.each do |se|
+        s.expect :on, nil, [se]
+      end
+      H2::Server::Stream::STREAM_DATA_EVENTS.each do |sde|
+        s.expect :on, nil, [sde]
+      end
+      s
+    end
+  end
+
+  class WithServerHandlerTest < Minitest::Test
+    def setup
+      @addr = '127.0.0.1'
+      @port = 1234
+      @url  = "http://#{@addr}:#{@port}"
+
+      @streams = ENV['STREAMS'] ? Integer(ENV['STREAMS']) : 5
+      @connections = ENV['CONNECTIONS'] ? Integer(ENV['CONNECTIONS']) : 32
+
+      @valid = Minitest::Mock.new
+    end
+
+    def with_server handler = nil, &block
+      handler ||= proc do |stream|
+        stream.respond :ok
+        stream.connection.goaway
+      end
+
+      block ||= ->{ H2.get url: @url, tls: false }
+
+      begin
+        server = H2::Server::HTTP.new host: @addr, port: @port, spy: false do |c|
+          c.each_stream &handler
+        end
+        block[server]
+      ensure
+        server.terminate if server && server.alive?
+      end
+    end
+  end
+
 end
 
 trap 'TTIN' do
