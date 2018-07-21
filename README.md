@@ -135,6 +135,10 @@ require 'h2/client/celluloid'
 
 This will lazily fire up a celluloid pool, with defaults defined by Celluloid.
 
+NOTE: if you've added reel and required the 'h2/server' API, Celluloid will be
+loaded in your Ruby VM already; however, you must still require this to have
+the client use Celluloid actor pools.
+
 #### Concurrent-Ruby ThreadPoolExecutor
 
 To use a concurrent-ruby thread pool executor for reading from `H2::Client` connections:
