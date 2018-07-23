@@ -20,7 +20,7 @@ require 'h2/server'
 
 server = H2::Server::HTTP.new host: addr, port: port do |connection|
   connection.each_stream do |stream|
-    stream.respond :ok, "hello, world!\n"
+    stream.respond status: 200, body: "hello, world!\n"
     stream.connection.goaway
   end
 end
