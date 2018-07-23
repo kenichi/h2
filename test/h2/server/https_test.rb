@@ -18,7 +18,7 @@ class HTTPSTest < H2::WithServerHandlerTest
 
   def with_tls_server handler = nil
     handler ||= proc do |stream|
-      stream.respond :ok
+      stream.respond status: 200
       stream.connection.goaway
     end
 
@@ -70,7 +70,7 @@ class HTTPSTest < H2::WithServerHandlerTest
         @valid.tap
       rescue => ex
       ensure
-        stream.respond :ok, 'boo'
+        stream.respond status: 200, body: 'boo'
         stream.connection.goaway
       end
     end
@@ -108,7 +108,7 @@ class HTTPSTest < H2::WithServerHandlerTest
             @valid.tap
           rescue => ex
           ensure
-            stream.respond :ok, 'boo'
+            stream.respond status: 200, body: 'boo'
             stream.connection.goaway
           end
         end

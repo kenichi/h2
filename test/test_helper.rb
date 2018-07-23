@@ -39,7 +39,7 @@ module H2
           else
             go = with_reel_test.verify headers: stream.request.headers,
                                        body: stream.request.body
-            stream.respond :ok
+            stream.respond status: 200
             connection.goaway if go
           end
         end
@@ -92,7 +92,7 @@ module H2
 
     def with_server handler = nil, &block
       handler ||= proc do |stream|
-        stream.respond :ok
+        stream.respond status: 200
         stream.connection.goaway
       end
 

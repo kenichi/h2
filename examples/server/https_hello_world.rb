@@ -21,9 +21,9 @@ s = H2::Server::HTTPS.new host: addr, port: port, **tls do |connection|
     stream.goaway_on_complete
 
     if stream.request.path == '/favicon.ico'
-      stream.respond :not_found
+      stream.respond status: 404
     else
-      stream.respond :ok, "hello, world!\n"
+      stream.respond status: 200, body: "hello, world!\n"
     end
   end
 end
