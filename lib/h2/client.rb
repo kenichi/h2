@@ -21,24 +21,24 @@ module H2
     attr_accessor :last_stream
     attr_reader :client, :reader, :scheme, :socket, :streams
 
-    def initialize addr: nil, port: nil, url: nil, tls: {}
-      raise ArgumentError if url.nil? && (addr.nil? || port.nil?)
+    def initialize host: nil, port: nil, url: nil, tls: {}
+      raise ArgumentError if url.nil? && (host.nil? || port.nil?)
 
       if url
         url     = URI.parse url unless URI === url
-        @addr   = url.host
+        @host   = url.host
         @port   = url.port
         @scheme = url.scheme
         tls     = false if 'http' == @scheme
       else
-        @addr = addr
+        @host = host
         @port = port
         @scheme = tls ? 'https' : 'http'
       end
 
       @tls     = tls
       @streams = {}
-      @socket  = TCPSocket.new(@addr, @port)
+      @socket  = TCPSocket.new(@host, @port)
       @socket  = tls_socket @socket if @tls
       @client  = HTTP2::Client.new
 
@@ -105,7 +105,7 @@ module H2
 
     def build_headers method:, path:, headers:
       h = {
-        AUTHORITY_KEY => [@addr, @port.to_s].join(':'),
+        AUTHORITY_KEY => [@host, @port.to_s].join(':'),
         METHOD_KEY    => method.to_s.upcase,
         PATH_KEY      => path,
         SCHEME_KEY    => @scheme
@@ -238,7 +238,7 @@ module H2
     def tls_socket socket
       socket = OpenSSL::SSL::SSLSocket.new socket, create_ssl_context
       socket.sync_close = true
-      socket.hostname = @addr unless RE_IP_ADDR.match(@addr)
+      socket.hostname = @host unless RE_IP_ADDR.match(@host)
       socket.connect
       socket
     end

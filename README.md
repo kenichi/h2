@@ -55,7 +55,7 @@ client.closed? #=> true
 # --- normal connection
 #
 
-client = H2::Client.new addr: 'example.com', port: 443
+client = H2::Client.new host: 'example.com', port: 443
 
 stream = client.get path: '/'
 
@@ -103,7 +103,7 @@ If you're running on macOS and using Homebrew's openssl package, you may need to
 specify the CA file in the TLS options:
 
 ```ruby
-client = H2::Client.new addr: 'example.com', port: 443, tls: { ca_file: '/usr/local/etc/openssl/cert.pem' }
+client = H2::Client.new host: 'example.com', port: 443, tls: { ca_file: '/usr/local/etc/openssl/cert.pem' }
 ```
 
 or when using the CLI:
