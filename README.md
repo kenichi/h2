@@ -29,7 +29,7 @@ stream = H2.get url: "http://#{addr}:#{port}", tls: false
 stream.body #=> "hello, world!\n"
 ```
 
-See [examples](https://github.com/kenichi/h2/tree/master/examples/server/)
+See [examples](https://github.com/kenichi/h2/tree/master/examples/server/).
 
 ## Client Usage
 

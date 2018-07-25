@@ -30,6 +30,10 @@ module H2
 
   class << self
 
+    # convenience wrappers to make requests with HTTP methods
+    #
+    # @see H2.request
+    #
     REQUEST_METHODS.each do |m|
       define_method m do |**args, &block|
         request method: m, **args, &block
@@ -38,14 +42,32 @@ module H2
 
     private
 
+    # creates a +H2::Client+ and initiates a +H2::Stream+ by making a request
+    # with the given HTTP method
+    #
+    # @param [String] host IP address or hostname
+    # @param [Integer] port TCP port
+    # @param [String,URI] url full URL to parse (optional: existing +URI+ instance)
+    # @param [Symbol] method HTTP request method
+    # @param [String] path request path
+    # @param [Hash] headers request headers
+    # @param [Hash] params request query string parameters
+    # @param [String] body request body
+    # @param [Hash,FalseClass] tls TLS options (optional: +false+ do not use TLS)
+    # @option tls [String] :cafile path to CA file
+    #
+    # @yield [H2::Stream]
+    #
+    # @return [H2::Stream]
+    #
     def request host: nil,
                 port: nil,
+                url: nil,
                 method:,
                 path: '/',
                 headers: {},
                 params: {},
                 body: nil,
-                url: nil,
                 tls: {},
                 &block
 

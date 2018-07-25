@@ -1,7 +1,17 @@
 h2 changelog
 ============
 
-### 0.4.1 16 jun 2017
+### 0.6.0 25 jul 2018
+
+* update server API - kwargs
+* update client API - addr: -> host:
+* add rubydoc, update readme
+
+### 0.5.0 21 jul 2018
+
+* add server
+
+### 0.4.1 17 jul 2018
 
 * update .travis.yml for latest supported versions
 * add CLI flags for threading model

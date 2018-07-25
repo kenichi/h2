@@ -21,6 +21,16 @@ module H2
     attr_accessor :last_stream
     attr_reader :client, :reader, :scheme, :socket, :streams
 
+    # create a new h2 client
+    #
+    # @param [String] host IP address or hostname
+    # @param [Integer] port TCP port
+    # @param [String,URI] url full URL to parse (optional: existing +URI+ instance)
+    # @param [Hash,FalseClass] tls TLS options (optional: +false+ do not use TLS)
+    # @option tls [String] :cafile path to CA file
+    #
+    # @return [H2::Client]
+    #
     def initialize host: nil, port: nil, url: nil, tls: {}
       raise ArgumentError if url.nil? && (host.nil? || port.nil?)
 
@@ -49,10 +59,14 @@ module H2
       read
     end
 
+    # @return true if the connection is closed
+    #
     def closed?
       @socket.closed?
     end
 
+    # close the connection
+    #
     def close
       unblock!
       @socket.close unless closed?
@@ -62,28 +76,55 @@ module H2
       @socket.eof?
     end
 
+    # send a goaway frame and wait until the connection is closed
+    #
     def goaway!
       goaway block: true
     end
 
+    # send a goaway frame and optionally wait for the connection to be closed
+    #
+    # @param [Boolean] block waits for close if +true+, returns immediately otherwise
+    #
+    # @return +false+ if already closed
+    # @return +nil+
+    #
     def goaway block: false
       return false if closed?
       @client.goaway
       block! if block
     end
 
+    # binds all connection events to their respective on_ handlers
+    #
     def bind_events
       CONNECTION_EVENTS.each do |e|
         @client.on(e){|*a| __send__ "on_#{e}", *a}
       end
     end
 
+    # convenience wrappers to make requests with HTTP methods
+    #
+    # @see Client#request
+    #
     REQUEST_METHODS.each do |m|
       define_method m do |**args, &block|
         request method: m, **args, &block
       end
     end
 
+    # initiate a +Stream+ by making a request with the given HTTP method
+    #
+    # @param [Symbol] method HTTP request method
+    # @param [String] path request path
+    # @param [Hash] headers request headers
+    # @param [Hash] params request query string parameters
+    # @param [String] body request body
+    #
+    # @yield [H2::Stream]
+    #
+    # @return [H2::Stream]
+    #
     def request method:, path:, headers: {}, params: {}, body: nil, &block
       s = @client.new_stream
       stream = add_stream method: method, path: path, stream: s, &block
@@ -95,6 +136,10 @@ module H2
       stream
     end
 
+    # mutates the given hash into +String+ keys and values
+    #
+    # @param [Hash] hash the headers +Hash+ to stringify
+    #
     def stringify_headers hash
       hash.keys.each do |key|
         hash[key] = hash[key].to_s unless String === hash[key]
@@ -103,6 +148,11 @@ module H2
       hash
     end
 
+    # builds headers +Hash+ with appropriate ordering
+    #
+    # @see https://http2.github.io/http2-spec/#rfc.section.8.1.2.1
+    # @see https://github.com/igrigorik/http-2/pull/136
+    #
     def build_headers method:, path:, headers:
       h = {
         AUTHORITY_KEY => [@host, @port.to_s].join(':'),
@@ -113,6 +163,9 @@ module H2
       h.merge! stringify_headers(headers)
     end
 
+    # creates a new stream and adds it to the +@streams+ +Hash+ keyed at both
+    # the method +Symbol+ and request path as well as the ID of the stream.
+    #
     def add_stream method:, path:, stream:, &block
       @streams[method] ||= {}
       @streams[method][path] ||= []
@@ -122,6 +175,8 @@ module H2
       stream
     end
 
+    # add query string parameters the given request path +String+
+    #
     def add_params params, path
       appendage = path.index('?') ? '&' : '?'
       path << appendage
@@ -130,10 +185,20 @@ module H2
 
     # ---
 
+    # maintain a ivar for the +Array+ to send to +IO.select+
+    #
     def selector
       @selector ||= [@socket]
     end
 
+    # creates a new +Thread+ to read the given number of bytes each loop from
+    # the current +@socket+
+    #
+    # NOTE: this is the override point for celluloid actor pool or concurrent
+    #       ruby threadpool support
+    #
+    # @param [Integer] maxlen maximum number of bytes to read
+    #
     def read maxlen = DEFAULT_MAXLEN
       main = Thread.current
       @reader = Thread.new do
@@ -145,6 +210,11 @@ module H2
       end
     end
 
+    # underyling read loop implementation, handling returned +Symbol+ values
+    # and shovelling data into the client parser
+    #
+    # @param [Integer] maxlen maximum number of bytes to read
+    #
     def _read maxlen = DEFAULT_MAXLEN
       begin
         data = nil
@@ -173,6 +243,10 @@ module H2
       end
     end
 
+    # fake exceptionless IO for reading on older ruby versions
+    #
+    # @param [Integer] maxlen maximum number of bytes to read
+    #
     def read_from_socket maxlen
       @socket.read_nonblock maxlen
     rescue IO::WaitReadable
@@ -181,11 +255,18 @@ module H2
 
     # ---
 
+    # close callback for parser: calls custom handler, then closes connection
+    #
     def on_close
       on :close
       close
     end
 
+    # frame callback for parser: writes bytes to the +@socket+, and slicing
+    # appropriately for given return values
+    #
+    # @param [String] bytes
+    #
     def on_frame bytes
       on :frame, bytes
 
@@ -207,17 +288,26 @@ module H2
       @socket.flush
     end
 
+    # fake exceptionless IO for writing on older ruby versions
+    #
+    # @param [String] bytes
+    #
     def write_to_socket bytes
       @socket.write_nonblock bytes
     rescue IO::WaitWritable
       :wait_writable
     end
 
+    # goaway callback for parser: calls custom handler, then closes connection
+    #
     def on_goaway *args
       on :goaway, *args
       close
     end
 
+    # push promise callback for parser: creates new +Stream+ with appropriate
+    # parent, binds close event, calls custom handler
+    #
     def on_promise promise
       push_promise = Stream.new client: self,
                                 parent: @streams[promise.parent.id],
@@ -235,6 +325,10 @@ module H2
 
     # ---
 
+    # build, configure, and return TLS socket
+    #
+    # @param [TCPSocket] socket unencrypted socket
+    #
     def tls_socket socket
       socket = OpenSSL::SSL::SSLSocket.new socket, create_ssl_context
       socket.sync_close = true
@@ -261,6 +355,8 @@ module H2
       ctx
     end
 
+    # handle protocol negotiation for older ruby/openssl versions
+    #
     if H2.alpn?
       def set_ssl_context_protocols ctx
         ctx.alpn_protocols = ALPN_PROTOCOLS
@@ -273,6 +369,8 @@ module H2
 
     # ---
 
+    # use exceptionless IO if this ruby version supports it
+    #
     module ExceptionlessIO
 
       def read_from_socket maxlen
