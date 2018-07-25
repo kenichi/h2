@@ -40,32 +40,13 @@ module H2
         bind_events
       end
 
-      # mimicing Reel::Connection#respond
+      # write status, headers, and body to +@stream+
       #
-      # write status, headers, and data to +@stream+
-      #
-      def respond response, body_or_headers = nil, body = nil
-
-        # :/
-        #
-        if Hash === body_or_headers
-          headers = body_or_headers
-          body ||= ''
-        else
-          headers = {}
-          body = body_or_headers ||= ''
-        end
-
-        @response = case response
-                    when Symbol, Integer
-                      response = Response.new stream: self,
-                                              status: response,
-                                              headers: headers,
-                                              body: body
-                    when Response
-                      response
-                    else raise TypeError, "invalid response: #{response.inspect}"
-                    end
+      def respond status:, headers: {}, body: ''
+        response = Response.new stream: self,
+                                status: status,
+                                headers: headers,
+                                body: body
 
         if @closed
           log :warn, 'stream closed before response sent'
@@ -85,20 +66,9 @@ module H2
         @connection.server.async.handle_push_promise pp
       end
 
-      # create a push promise - mimicing Reel::Connection#respond
+      # create a push promise
       #
-      def push_promise_for path, body_or_headers = {}, body = nil
-
-        # :/
-        #
-        case body_or_headers
-        when Hash
-          headers = body_or_headers
-        else
-          headers = {}
-          body = body_or_headers
-        end
-
+      def push_promise_for path:, headers: {}, body: nil
         headers.merge! AUTHORITY_KEY => @request.authority,
                        SCHEME_KEY    => @request.scheme
 

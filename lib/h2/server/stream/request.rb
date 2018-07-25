@@ -55,8 +55,8 @@ module H2
 
         # respond to this request on its stream
         #
-        def respond response, body_or_headers = nil, body = nil
-          @stream.respond response, body_or_headers, body
+        def respond status:, headers: {}, body: ''
+          @stream.respond status: status, headers: headers, body: body
         end
 
       end

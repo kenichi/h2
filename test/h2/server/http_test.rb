@@ -25,7 +25,7 @@ class HTTPTest < H2::WithServerHandlerTest
         @valid.tap
       rescue => ex
       ensure
-        stream.respond :ok
+        stream.respond status: 200
         stream.connection.goaway
       end
     end
@@ -46,7 +46,7 @@ class HTTPTest < H2::WithServerHandlerTest
     2.times { @valid.expect :tap, nil }
 
     handler = proc do |stream|
-      stream.respond :ok, {'test-header' => 'test_value'}, 'test_body'
+      stream.respond status: :ok, headers: {'test-header' => 'test_value'}, body: 'test_body'
       stream.connection.goaway
       @valid.tap
     end
@@ -69,7 +69,7 @@ class HTTPTest < H2::WithServerHandlerTest
     (@connections * 2).times { @valid.expect :tap, nil }
 
     handler = proc do |stream|
-      stream.respond :ok
+      stream.respond status: 200
       stream.connection.goaway
       @valid.tap
     end
@@ -104,7 +104,7 @@ class HTTPTest < H2::WithServerHandlerTest
 
     handler = proc do |stream|
       count -= 1
-      stream.respond :ok
+      stream.respond status: 200
       stream.connection.goaway if count == 0
       @valid.tap
     end
@@ -127,7 +127,7 @@ class HTTPTest < H2::WithServerHandlerTest
     handler = proc do |stream|
       conn = stream.connection
       count[conn] -= 1
-      stream.respond :ok
+      stream.respond status: 200
       @valid.tap
       conn.goaway if count[conn] == 0
     end

@@ -32,7 +32,7 @@ class H2::StreamTest < H2::WithServerTest
     @stream = @client.get path: '/'
     @stream.block!
     assert @stream.ok?
-    self.handler = ->(s){ s.respond :not_found; s.connection.goaway }
+    self.handler = ->(s){ s.respond status: 404; s.connection.goaway }
     s = @client.get path: '/'
     s.block!
     refute s.ok?
@@ -42,7 +42,7 @@ class H2::StreamTest < H2::WithServerTest
     mutex = Mutex.new
     condition = ConditionVariable.new
     self.handler = proc do |s|
-      s.respond :ok
+      s.respond status: 200
       s.connection.goaway
       sleep 0.25
       mutex.synchronize { condition.signal }

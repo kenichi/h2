@@ -11,8 +11,8 @@ class PushPromiseTest < H2::WithServerHandlerTest
         stream.connection.goaway
         @valid.tap
       end
-      stream.push_promise '/push', 'promise'
-      stream.respond :ok
+      stream.push_promise path: '/push', body: 'promise'
+      stream.respond status: 200
     end
 
     with_server handler do
@@ -37,9 +37,9 @@ class PushPromiseTest < H2::WithServerHandlerTest
         stream.connection.goaway
         @valid.tap
       end
-      pp = stream.push_promise_for '/push', 'promise'
+      pp = stream.push_promise_for path: '/push', body: 'promise'
       pp.make_on stream
-      stream.respond :ok
+      stream.respond status: 200
       pp.keep_async
     end
 
@@ -67,9 +67,9 @@ class PushPromiseTest < H2::WithServerHandlerTest
           stream.connection.goaway
           @valid.tap
         end
-        pp = stream.push_promise_for '/push', {'etag' => '1234'}, 'promise'
+        pp = stream.push_promise_for path: '/push', headers: {'etag' => '1234'}, body: 'promise'
         pp.make_on stream
-        stream.respond :ok
+        stream.respond status: 200
         Celluloid.sleep 1 # wait for client to cancel
         refute pp.keep
         assert pp.canceled?

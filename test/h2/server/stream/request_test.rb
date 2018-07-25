@@ -6,7 +6,9 @@ class RequestTest < Minitest::Test
   def test_construction_and_basic_api
     s = Minitest::Mock.new
     s.expect :connection, nil
-    s.expect :respond, nil, [:ok, 1, 2]
+    s.expect :respond, nil do |status:, headers:, body:|
+      status == 200 && headers == {} && body == ''
+    end
     s.expect :==, true, [s]
     r = H2::Server::Stream::Request.new s
     assert_equal s, r.stream
@@ -17,7 +19,7 @@ class RequestTest < Minitest::Test
     assert_nil r.addr
     assert_nil r.method
     assert_nil r.path
-    r.respond :ok, 1, 2
+    r.respond status: 200, headers: {}, body: ''
     s.verify
   end
 
