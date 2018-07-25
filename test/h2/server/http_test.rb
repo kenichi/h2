@@ -4,7 +4,7 @@ class HTTPTest < H2::WithServerHandlerTest
 
   def test_accepts_tcp_connections
     with_server do
-      s = TCPSocket.new @addr, @port
+      s = TCPSocket.new @host, @port
       refute s.closed?
       s.close
     end
@@ -79,7 +79,7 @@ class HTTPTest < H2::WithServerHandlerTest
     with_server handler do
       clients = Array.new(@connections).map do
         mutex.synchronize do
-          c = H2::Client.new addr: @addr, port: @port, tls: false
+          c = H2::Client.new host: @host, port: @port, tls: false
           c.get path: '/'
           c
         end
@@ -110,7 +110,7 @@ class HTTPTest < H2::WithServerHandlerTest
     end
 
     with_server handler do
-      c = H2::Client.new addr: @addr, port: @port, tls: false
+      c = H2::Client.new host: @host, port: @port, tls: false
       @streams.times { c.get path: '/' }
       c.block!
       assert_equal 0, count
@@ -133,7 +133,7 @@ class HTTPTest < H2::WithServerHandlerTest
     end
 
     with_server handler do
-      clients = Array.new(@connections).map { H2::Client.new addr: @addr, port: @port, tls: false }
+      clients = Array.new(@connections).map { H2::Client.new host: @host, port: @port, tls: false }
       clients.each {|c| @streams.times { c.get path: '/' }}
       clients.each &:block!
       count.each {|_,v| assert_equal 0, v }

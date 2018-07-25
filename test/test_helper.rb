@@ -28,11 +28,11 @@ module H2
     end
 
     def setup
-      @addr = '127.0.0.1'
+      @host = '127.0.0.1'
       @port = 45670
       with_reel_test = self
 
-      @server = H2::Server::HTTP.new host: @addr, port: @port do |connection|
+      @server = H2::Server::HTTP.new host: @host, port: @port do |connection|
         connection.each_stream do |stream|
           if with_reel_test.handler
             with_reel_test.handler[stream]
@@ -44,7 +44,7 @@ module H2
           end
         end
       end
-      @client = H2::Client.new addr: @addr, port: @port, tls: false
+      @client = H2::Client.new host: @host, port: @port, tls: false
     end
 
     def teardown
@@ -80,9 +80,9 @@ module H2
 
   class WithServerHandlerTest < Minitest::Test
     def setup
-      @addr = '127.0.0.1'
+      @host = '127.0.0.1'
       @port = 1234
-      @url  = "http://#{@addr}:#{@port}"
+      @url  = "http://#{@host}:#{@port}"
 
       @streams = ENV['STREAMS'] ? Integer(ENV['STREAMS']) : 5
       @connections = ENV['CONNECTIONS'] ? Integer(ENV['CONNECTIONS']) : 32
@@ -99,7 +99,7 @@ module H2
       block ||= ->{ H2.get url: @url, tls: false }
 
       begin
-        server = H2::Server::HTTP.new host: @addr, port: @port, spy: false do |c|
+        server = H2::Server::HTTP.new host: @host, port: @port, spy: false do |c|
           c.each_stream &handler
         end
         block[server]

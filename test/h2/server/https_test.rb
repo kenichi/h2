@@ -23,7 +23,7 @@ class HTTPSTest < H2::WithServerHandlerTest
     end
 
     begin
-      server = H2::Server::HTTPS.new host: @addr, port: @port, cert: @server_cert, key: @server_key do |c|
+      server = H2::Server::HTTPS.new host: @host, port: @port, cert: @server_cert, key: @server_key do |c|
         c.each_stream &handler
       end
       yield server
@@ -34,7 +34,7 @@ class HTTPSTest < H2::WithServerHandlerTest
 
   def test_accept_tcp_connections
     with_tls_server do
-      s = TCPSocket.new @addr, @port
+      s = TCPSocket.new @host, @port
       refute s.closed?
       s.close
     end
@@ -42,7 +42,7 @@ class HTTPSTest < H2::WithServerHandlerTest
 
   def test_accept_tls_1_2_connections
     with_tls_server do
-      s = TCPSocket.new @addr, @port
+      s = TCPSocket.new @host, @port
       ctx = OpenSSL::SSL::SSLContext.new
 
       # https://github.com/jruby/jruby-openssl/issues/99
@@ -53,7 +53,7 @@ class HTTPSTest < H2::WithServerHandlerTest
       ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
       s = OpenSSL::SSL::SSLSocket.new s, ctx
       s.sync_close = true
-      s.hostname = @addr
+      s.hostname = @host
       s.connect
       refute s.closed?
       s.close

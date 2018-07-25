@@ -26,7 +26,7 @@ class H2::Client::TLSTest < Minitest::Test
     tcp_server = TCPServer.new '127.0.0.1', 45670
     server = OpenSSL::SSL::SSLServer.new tcp_server, ctx
     st = Thread.new { c = server.accept rescue nil }
-    H2::Client.new addr: '127.0.0.1', port: 45670 rescue nil
+    H2::Client.new host: '127.0.0.1', port: 45670 rescue nil
     server.close
     assert flag, 'servername_cb should not have been called!'
   end
@@ -39,7 +39,7 @@ class H2::Client::TLSTest < Minitest::Test
       tcp_server = TCPServer.new '::1', 45670
       server = OpenSSL::SSL::SSLServer.new tcp_server, ctx
       st = Thread.new { c = server.accept rescue nil }
-      H2::Client.new addr: '::1', port: 45670 rescue nil
+      H2::Client.new host: '::1', port: 45670 rescue nil
       server.close
       assert flag, 'servername_cb should not have been called!'
     end

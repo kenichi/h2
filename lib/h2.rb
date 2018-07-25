@@ -38,7 +38,7 @@ module H2
 
     private
 
-    def request addr: nil,
+    def request host: nil,
                 port: nil,
                 method:,
                 path: '/',
@@ -49,14 +49,14 @@ module H2
                 tls: {},
                 &block
 
-      raise ArgumentError if url.nil? && (addr.nil? || port.nil?)
+      raise ArgumentError if url.nil? && (host.nil? || port.nil?)
       if url
         url = URI.parse url unless URI === url
-        addr = url.host
+        host = url.host
         port = url.port
         path = url.request_uri
       end
-      c = Client.new addr: addr, port: port, tls: tls
+      c = Client.new host: host, port: port, tls: tls
       c.__send__ method, path: path, headers: headers, params: params, body: body, &block
     end
   end
