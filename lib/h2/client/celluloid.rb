@@ -9,6 +9,7 @@ module H2
         include ::Celluloid
 
         def read client, maxlen = DEFAULT_MAXLEN
+          client.reading!
           client._read maxlen
         end
       end
