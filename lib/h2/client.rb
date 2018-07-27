@@ -24,14 +24,14 @@ module H2
     # create a new h2 client
     #
     # @param [String] host IP address or hostname
-    # @param [Integer] port TCP port
+    # @param [Integer] port TCP port (default: 443)
     # @param [String,URI] url full URL to parse (optional: existing +URI+ instance)
     # @param [Hash,FalseClass] tls TLS options (optional: +false+ do not use TLS)
     # @option tls [String] :cafile path to CA file
     #
     # @return [H2::Client]
     #
-    def initialize host: nil, port: nil, url: nil, tls: {}
+    def initialize host: nil, port: 443, url: nil, tls: {}
       raise ArgumentError if url.nil? && (host.nil? || port.nil?)
 
       if url
