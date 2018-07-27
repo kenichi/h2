@@ -1,6 +1,11 @@
 h2 changelog
 ============
 
+### 0.6.1 27 jul 2018
+
+* fix race between reading and sending first frame
+* make `port:` default to 443 for `H2::Client.new`
+
 ### 0.6.0 25 jul 2018
 
 * update server API - kwargs

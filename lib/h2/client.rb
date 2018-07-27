@@ -16,9 +16,9 @@ module H2
 
     # include FrameDebugger
 
-    ALPN_PROTOCOLS           = ['h2']
-    DEFAULT_MAXLEN           = 4096
-    RE_IP_ADDR               = Regexp.union Resolv::IPv4::Regex, Resolv::IPv6::Regex
+    ALPN_PROTOCOLS = ['h2']
+    DEFAULT_MAXLEN = 4096
+    RE_IP_ADDR     = Regexp.union Resolv::IPv4::Regex, Resolv::IPv6::Regex
 
     attr_accessor :last_stream
     attr_reader :client, :reader, :scheme, :socket, :streams
