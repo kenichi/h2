@@ -230,7 +230,7 @@ module H2
             begin
               @client << data
             rescue HTTP2::Error::ProtocolError => pe
-              STDERR.puts 'mystery protocol error!'
+              STDERR.puts "protocol error: #{pe.message}"
               STDERR.puts pe.backtrace.map {|l| "\t" + l}
             end
           end
