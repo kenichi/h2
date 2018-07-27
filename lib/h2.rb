@@ -134,6 +134,33 @@ module H2
 
   end
 
+  module FrameDebugger
+
+    def self.included base
+      H2.verbose!
+      base::PARSER_EVENTS.push :frame_sent, :frame_received
+    end
+
+    def on_frame_sent f
+      Logger.debug "Sent frame: #{truncate_frame(f).inspect}"
+    end
+
+    def on_frame_received f
+      Logger.debug "Received frame: #{truncate_frame(f).inspect}"
+    end
+
+    private
+
+    def truncate_string s
+      (String === s && s.length > 64) ? "#{s[0,64]}..." : s
+    end
+
+    def truncate_frame f
+      f.reduce({}) { |h, (k, v)| h[k] = truncate_string(v); h }
+    end
+
+  end
+
 end
 
 require 'h2/client'

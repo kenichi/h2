@@ -13,11 +13,11 @@ module H2
       #
       PARSER_EVENTS = [
         :frame,
-        :frame_sent,
-        :frame_received,
         :stream,
         :goaway
       ]
+
+      # include FrameDebugger
 
       attr_reader :parser, :server, :socket
 
@@ -107,22 +107,10 @@ module H2
       # called by +@parser+ with a binary frame to write to the +@socket+
       #
       def on_frame bytes
-        Logger.debug "Writing bytes: #{truncate_string(bytes.unpack("H*").first)}" if H2.verbose?
-
-        # N.B. this is the important bit
-        #
         @socket.write bytes
       rescue IOError, Errno::EPIPE => e
         Logger.error e.message
         close
-      end
-
-      def on_frame_sent f
-        Logger.debug "Sent frame: #{truncate_frame(f).inspect}" if H2.verbose?
-      end
-
-      def on_frame_received f
-        Logger.debug "Received frame: #{truncate_frame(f).inspect}" if H2.verbose?
       end
 
       # the +@parser+ calls this when a new stream has been initiated by the
@@ -136,16 +124,6 @@ module H2
       #
       def on_goaway event
         close
-      end
-
-      private
-
-      def truncate_string s
-        (String === s && s.length > 64) ? "#{s[0,64]}..." : s
-      end
-
-      def truncate_frame f
-        f.reduce({}) { |h, (k, v)| h[k] = truncate_string(v); h }
       end
 
     end

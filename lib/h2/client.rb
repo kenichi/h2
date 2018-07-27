@@ -7,12 +7,14 @@ module H2
     include Blockable
     include On
 
-    CONNECTION_EVENTS = [
+    PARSER_EVENTS = [
       :close,
       :frame,
       :goaway,
       :promise
     ]
+
+    # include FrameDebugger
 
     ALPN_PROTOCOLS           = ['h2']
     DEFAULT_MAXLEN           = 4096
@@ -107,7 +109,7 @@ module H2
     # binds all connection events to their respective on_ handlers
     #
     def bind_events
-      CONNECTION_EVENTS.each do |e|
+      PARSER_EVENTS.each do |e|
         @client.on(e){|*a| __send__ "on_#{e}", *a}
       end
     end
