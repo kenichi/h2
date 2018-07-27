@@ -8,8 +8,6 @@
 require 'colored'
 require 'optparse'
 
-$: << File.expand_path('../../../http-2/lib', __FILE__)
-
 begin # {{{
   require 'h2'
 rescue LoadError
@@ -139,8 +137,8 @@ end
 
 puts s.body
 
-c.goaway if options[:goaway]
 c.block! if options[:block]
+c.goaway if options[:goaway]
 c.close
 
 # }}}

@@ -94,7 +94,7 @@ module H2
 
         rescue => e
           Logger.error "Exception: #{e.message} - closing socket"
-          STDERR.puts e.backtrace
+          STDERR.puts e.backtrace if H2.verbose?
           close
 
         end

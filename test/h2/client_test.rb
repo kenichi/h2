@@ -19,8 +19,20 @@ class H2::ClientTest < H2::WithServerTest
     assert !!@client
     assert !!@client.socket
     assert !@client.closed?
-    assert @client.reader.alive?
     assert @client.streams.empty?
+  end
+
+  def test_reading_starts_after_first_frame_sent
+    f = HTTP2::Framer.new
+    @client.on_frame f.generate({
+      type: :settings,
+      stream: 0,
+      payload: [
+        [:settings_max_concurrent_streams, 10],
+        [:settings_initial_window_size, 0x7fffffff],
+      ]
+    })
+    assert @client.reader.alive?
   end
 
   H2::REQUEST_METHODS.each do |m|

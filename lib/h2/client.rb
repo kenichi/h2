@@ -52,11 +52,12 @@ module H2
       @socket  = tls_socket @socket if @tls
       @client  = HTTP2::Client.new
 
+      @first   = true
+      @reading = false
+
       init_blocking
       yield self if block_given?
       bind_events
-
-      read
     end
 
     # @return true if the connection is closed
@@ -74,6 +75,14 @@ module H2
 
     def eof?
       @socket.eof?
+    end
+
+    def reading?
+      @mutex.synchronize { @reading }
+    end
+
+    def reading!
+      @mutex.synchronize { @reading = true }
     end
 
     # send a goaway frame and wait until the connection is closed
@@ -194,6 +203,8 @@ module H2
     # creates a new +Thread+ to read the given number of bytes each loop from
     # the current +@socket+
     #
+    # NOTE: initial client frames (settings, etc) should be sent first!
+    #
     # NOTE: this is the override point for celluloid actor pool or concurrent
     #       ruby threadpool support
     #
@@ -202,6 +213,7 @@ module H2
     def read maxlen = DEFAULT_MAXLEN
       main = Thread.current
       @reader = Thread.new do
+        reading!
         begin
           _read maxlen
         rescue => e
@@ -286,6 +298,9 @@ module H2
         @socket.write bytes
       end
       @socket.flush
+
+      @first = false if @first
+      read unless @first or @reading
     end
 
     # fake exceptionless IO for writing on older ruby versions
