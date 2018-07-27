@@ -1,5 +1,4 @@
 require 'celluloid/current'
-require 'logger'
 require 'reel'
 require 'h2/reel/ext'
 require 'h2'
@@ -7,8 +6,6 @@ require 'h2'
 module H2
 
   CONTENT_LENGTH_KEY = 'content-length'
-
-  Logger = ::Logger.new STDOUT
 
   class << self
 
@@ -19,17 +16,6 @@ module H2
     def jruby?
       return @jruby if defined? @jruby
       @jruby = RUBY_ENGINE == 'jruby'
-    end
-
-    # turn on extra verbose debug logging
-    #
-    def verbose!
-      @verbose = true
-    end
-
-    def verbose?
-      @verbose = false unless defined?(@verbose)
-      @verbose
     end
 
   end

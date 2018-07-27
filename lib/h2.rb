@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'http/2'
+require 'logger'
 require 'uri'
 require 'h2/version'
 
@@ -28,7 +29,20 @@ module H2
     :put
   ]
 
+  Logger = ::Logger.new STDOUT
+
   class << self
+
+    # turn on extra verbose debug logging
+    #
+    def verbose!
+      @verbose = true
+    end
+
+    def verbose?
+      @verbose = false unless defined?(@verbose)
+      @verbose
+    end
 
     # convenience wrappers to make requests with HTTP methods
     #
