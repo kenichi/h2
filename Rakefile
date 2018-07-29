@@ -3,7 +3,7 @@ require "rake/testtask"
 
 task default: :test
 
-Rake::TestTask.new :test do |t|
+Rake::TestTask.new :test => ['test:certs'] do |t|
   t.test_files = FileList['test/**/*_test.rb']
 end
 
@@ -18,7 +18,13 @@ namespace :test do
     end
   end
 
-  task :nginx do
+  task :certs do
+    certs_dir = Pathname.new File.expand_path '../tmp/certs', __FILE__
+    ca_file = certs_dir.join('ca.crt').to_s
+    require_relative 'test/support/create_certs' unless File.exist? ca_file
+  end
+
+  task :nginx => [:certs] do
     system "docker build -t h2_nginx_http2 test/support/nginx"
     puts "\nstarting nginx with http/2 support"
     puts "using document root: test/support/nginx/"
