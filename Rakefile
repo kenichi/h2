@@ -18,4 +18,13 @@ namespace :test do
     end
   end
 
+  task :nginx do
+    system "docker build -t h2_nginx_http2 test/support/nginx"
+    puts "\nstarting nginx with http/2 support"
+    puts "using document root: test/support/nginx/"
+    puts "using TLS certs: tmp/certs/server.*"
+    puts "listening at https://localhost:4430/"
+    system "docker run --rm -v `pwd`/tmp/certs:/usr/local/nginx/certs -v `pwd`/test/support/nginx:/usr/local/nginx/html -p 4430:443 -it h2_nginx_http2"
+  end
+
 end
