@@ -136,8 +136,11 @@ if options[:verbose]
 end
 
 puts s.body
+c.block! if options[:block] or !s.pushes.empty?
+s.pushes.each do |p|
+  puts "push promise: #{p.headers[':path']}"
+end
 
-c.block! if options[:block]
 c.goaway if options[:goaway]
 c.close
 

@@ -9,15 +9,9 @@ module H2
 
       # build a new +PushPromise+ for the path, with the headers and body given
       #
-      def initialize path, body_or_headers = {}, body = nil
+      def initialize path:, headers: {}, body: nil
         @path = path
-        if Hash === body_or_headers
-          headers = body_or_headers.dup
-          @body = body
-        else
-          headers = {}
-          @body = body_or_headers
-        end
+        @body = body
 
         @promise_headers = {
           METHOD_KEY    => GET,

@@ -62,4 +62,22 @@ class RequestTest < Minitest::Test
     assert_equal '/ohai', r.path
   end
 
+  def test_path_without_query_string
+    r = H2::Server::Stream::Request.new Object.new
+    r.headers.merge! ':path' => '/ohai'
+    assert_equal '/ohai', r.path
+  end
+
+  def test_path_with_query_string
+    r = H2::Server::Stream::Request.new Object.new
+    r.headers.merge! ':path' => '/ohai?foo=bar'
+    assert_equal '/ohai', r.path
+  end
+
+  def test_path_with_query_string_multi
+    r = H2::Server::Stream::Request.new Object.new
+    r.headers.merge! ':path' => '/ohai?foo=bar&baz=bat'
+    assert_equal '/ohai', r.path
+  end
+
 end

@@ -51,8 +51,8 @@ module H2
         if @closed
           log :warn, 'stream closed before response sent'
         else
-          response.respond_on(stream)
           log :info, response
+          response.respond_on(stream)
           @responded = true
         end
       end
@@ -72,7 +72,7 @@ module H2
         headers.merge! AUTHORITY_KEY => @request.authority,
                        SCHEME_KEY    => @request.scheme
 
-        PushPromise.new path, headers, body
+        PushPromise.new path: path, headers: headers, body: body
       end
 
       # begin the new push promise stream from this +@stream+ by sending the

@@ -44,7 +44,7 @@ module H2
         # retreive the path from the stream request headers
         #
         def path
-          @path ||= headers[PATH_KEY]
+          @path ||= headers[PATH_KEY]&.split('?')&.first
         end
 
         # retreive the scheme from the stream request headers
