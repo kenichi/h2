@@ -7,6 +7,15 @@ module H2
 
         # build a new +Response+ object
         #
+        # @param [H2::Server::Stream] stream: Stream instance associated with this response
+        # @param [Integer] status: HTTP status code
+        # @param [Hash] headers: response headers
+        # @param [String,#each] body: response body. NOTE: may be any object that
+        #                             `respond_to? :each` which both yields and returns
+        #                             String objects.
+        #
+        # @return [H2::Server::Stream::Response]
+        #
         def initialize stream:, status:, headers: {}, body: ''
           @stream     = stream
           @headers    = headers
@@ -19,20 +28,18 @@ module H2
         # sets the content length in the headers by the byte size of +@body+
         #
         def init_content_length
-          @content_length = case @body
-                            when String
+          return if @headers.any? {|k,_| k.downcase == CONTENT_LENGTH_KEY}
+          return if @body.respond_to?(:each)
+          @content_length = case
+                            when String === @body
                               @body.bytesize
-                            when IO
-                              @body.stat.size
                             when NilClass
                               '0'
                             else
                               raise TypeError, "can't render #{@body.class} as a response body"
                             end
 
-          unless @headers.any? {|k,_| k.downcase == CONTENT_LENGTH_KEY}
-            @headers[CONTENT_LENGTH_KEY] = @content_length
-          end
+          @headers[CONTENT_LENGTH_KEY] = @content_length
         end
 
         # the corresponding +Request+ to this +Response+
@@ -48,13 +55,17 @@ module H2
         def respond_on s
           headers = { STATUS_KEY => @status.to_s }.merge @headers
           s.headers stringify_headers(headers)
-          case @body
-          when String
+          case
+          when String === @body
             s.data @body
-          when IO
-            raise NotImplementedError # TODO
+          when @body.respond_to?(:each)
+            final = @body.each {|res| s.data res, end_stream: false}
+            s.data final
           else
+            stream.log :error, "unexpected @body: #{caller[0]}"
           end
+        rescue ::HTTP2::Error::StreamClosed => sc
+          stream.log :warn, "stream closed early by client"
         end
 
         # sets +@status+ either from given integer value (HTTP status code) or by

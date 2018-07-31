@@ -52,4 +52,38 @@ class ResponseTest < Minitest::Test
     s.verify
   end
 
+  class Eacher
+    attr_reader :mock
+    def initialize
+      @mock = Minitest::Mock.new
+      5.times { @mock.expect :tap, nil }
+      @count = 5
+    end
+    def each &block
+      loop do
+        @mock.tap
+        yield @count.to_s
+        @count -= 1
+        break if @count == 0
+      end
+      @count.to_s
+    end
+  end
+
+  def test_respond_with_eachable
+    eacher = Eacher.new
+    s = Minitest::Mock.new
+    s.expect :headers, nil, [{':status' => '200'}]
+    s.expect :data, nil, ['5', {end_stream: false}]
+    s.expect :data, nil, ['4', {end_stream: false}]
+    s.expect :data, nil, ['3', {end_stream: false}]
+    s.expect :data, nil, ['2', {end_stream: false}]
+    s.expect :data, nil, ['1', {end_stream: false}]
+    s.expect :data, nil, ['0']
+    r = H2::Server::Stream::Response.new stream: nil, status: 200, body: eacher
+    r.respond_on s
+    s.verify
+    eacher.mock.verify
+  end
+
 end

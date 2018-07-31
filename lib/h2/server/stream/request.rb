@@ -47,6 +47,15 @@ module H2
           @path ||= headers[PATH_KEY]&.split('?')&.first
         end
 
+        # retreive the query string from the stream request headers
+        #
+        def query_string
+          return @query_string if defined?(@query_string)
+          @query_string = headers[PATH_KEY].index '?'
+          return if @query_string.nil?
+          @query_string = headers[PATH_KEY][(@query_string + 1)..-1]
+        end
+
         # retreive the scheme from the stream request headers
         #
         def scheme
