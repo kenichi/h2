@@ -1,6 +1,5 @@
 require 'celluloid/current'
-require 'reel'
-require 'h2/reel/ext'
+require 'celluloid/io'
 require 'h2'
 
 module H2
@@ -20,13 +19,28 @@ module H2
 
   end
 
-  # base H2 server, a direct subclass of +Reel::Server+
+  # base H2 server, a +Celluoid::IO+ production
   #
-  class Server < ::Reel::Server
+  class Server
+    include Celluloid::IO
+
+    TCP_DEFAULT_BACKLOG = 100
+
+    execute_block_on_receiver :initialize
+    finalizer :shutdown
 
     def initialize server, **options, &on_connection
+      @server        = server
+      @options       = options
       @on_connection = on_connection
-      super server, options
+
+      backlog = options.fetch :backlog, TCP_DEFAULT_BACKLOG
+      @server.listen backlog
+      async.run
+    end
+
+    def shutdown
+      @server.close if @server
     end
 
     # build a new connection object, run it through the given block, and
@@ -72,6 +86,10 @@ module H2
         @tcpserver = Celluloid::IO::TCPServer.new host, port
         options.merge! host: host, port: port
         super @tcpserver, options, &on_connection
+      end
+
+      def run
+        loop { async.handle_connection @server.accept }
       end
 
     end

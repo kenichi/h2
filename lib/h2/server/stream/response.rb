@@ -17,10 +17,10 @@ module H2
         # @return [H2::Server::Stream::Response]
         #
         def initialize stream:, status:, headers: {}, body: ''
-          @stream     = stream
-          @headers    = headers
-          @body       = body
-          self.status = status
+          @stream  = stream
+          @headers = headers
+          @body    = body
+          @status  = status
 
           init_content_length
         end
@@ -66,24 +66,6 @@ module H2
           end
         rescue ::HTTP2::Error::StreamClosed => sc
           stream.log :warn, "stream closed early by client"
-        end
-
-        # sets +@status+ either from given integer value (HTTP status code) or by
-        # mapping a +Symbol+ in +Reel::Response::SYMBOL_TO_STATUS_CODE+ to one
-        #
-        def status= status
-          case status
-          when Integer
-            @status = status
-          when Symbol
-            if code = ::Reel::Response::SYMBOL_TO_STATUS_CODE[status]
-              self.status = code
-            else
-              raise ArgumentError, "unrecognized status symbol: #{status}"
-            end
-          else
-            raise TypeError, "invalid status type: #{status.inspect}"
-          end
         end
 
         def to_s

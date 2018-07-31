@@ -46,7 +46,7 @@ class HTTPTest < H2::WithServerHandlerTest
     2.times { @valid.expect :tap, nil }
 
     handler = proc do |stream|
-      stream.respond status: :ok, headers: {'test-header' => 'test_value'}, body: 'test_body'
+      stream.respond status: 200, headers: {'test-header' => 'test_value'}, body: 'test_body'
       stream.connection.goaway
       @valid.tap
     end

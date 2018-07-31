@@ -30,14 +30,14 @@ module H2
     def setup
       @host = '127.0.0.1'
       @port = 45670
-      with_reel_test = self
+      with_server_test = self
 
       @server = H2::Server::HTTP.new host: @host, port: @port do |connection|
         connection.each_stream do |stream|
-          if with_reel_test.handler
-            with_reel_test.handler[stream]
+          if with_server_test.handler
+            with_server_test.handler[stream]
           else
-            go = with_reel_test.verify headers: stream.request.headers,
+            go = with_server_test.verify headers: stream.request.headers,
                                        body: stream.request.body
             stream.respond status: 200
             connection.goaway if go

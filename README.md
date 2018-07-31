@@ -12,8 +12,8 @@ H2 uses:
 ## Server Usage
 
 Server API is currently optional, and must be required separately. The server
-uses [Reel](https://github.com/celluloid/reel), but since this API is optional,
-reel must be separately added to `Gemfile`. It is currently based on `reel-0.6.1`.
+uses [Celluloid::IO](https://github.com/celluloid/celluloid-io), but since this API is optional,
+celluloid-io must be separately added to `Gemfile`. It is currently based on `celluloid-io-0.17.3`.
 
 ```ruby
 require 'h2/server'
@@ -135,9 +135,9 @@ require 'h2/client/celluloid'
 
 This will lazily fire up a celluloid pool, with defaults defined by Celluloid.
 
-NOTE: if you've added reel and required the 'h2/server' API, Celluloid will be
-loaded in your Ruby VM already; however, you must still require this to have
-the client use Celluloid actor pools.
+NOTE: if you've added celluloid-io and required the 'h2/server' API, Celluloid 
+will be loaded in your Ruby VM already; however, you must still require this to
+have the client use Celluloid actor pools.
 
 #### Concurrent-Ruby ThreadPoolExecutor
 

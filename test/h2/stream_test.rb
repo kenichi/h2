@@ -52,36 +52,41 @@ class H2::StreamTest < H2::WithServerTest
     assert s.closed?
   end
 
-  # TODO: not implemented in reel/h2 yet
-  #
-  # def test_pushes
-  #   self.handler = proc do |s|
-  #     s.push_promise '/ohai', :text, 'thar'
-  #     s.respond :ok
-  #   end
-  #   s = @client.get path: '/'
-  #   s.block!
-  #   @client.goaway!
-  #   @client.block!
-  #   refute s.pushes.empty?
-  #   p = s.pushes.first
-  #   assert_equal s, p.parent
-  #   assert p.push?
-  # end
+  def test_pushes
+    self.handler = proc do |s|
+      s.push_promise path: '/ohai', headers: {'content-type' => 'text/plain'}, body: 'thar'
+      s.respond status: 200
+    end
+    s = @client.get path: '/'
+    s.block!
+    @client.goaway!
+    @client.block!
+    refute s.pushes.empty?
+    p = s.pushes.first
+    assert_equal s, p.parent
+    assert p.push?
+    assert p.headers.has_key? 'content-type'
+    assert_equal 'text/plain', p.headers['content-type']
+    assert_equal 'thar', p.body
+    assert_equal '', s.body
+  end
 
-  # def test_rst_stream_on_push_header
-  #   self.handler = proc do |s|
-  #     s.push_promise '/ohai', {some: 'data'}, 'thar'
-  #     s.respond :ok
-  #   end
-  #   s = @client.get path: '/' do |s|
-  #     s.on :headers do |h|
-  #       s.cancel! if h['some'] == 'data'
-  #     end
-  #   end
-  #   s.block!
-  #   @client.goaway!
-  #   @client.block!
-  # end
+  def test_rst_stream_on_push_header
+    self.handler = proc do |s|
+      pp = s.push_promise_for path: '/ohai', headers: {'etag' => '12345'}, body: 'thar'
+      s.respond status: 200
+      Celluloid.sleep 1
+      pp.keep
+    end
+    s = @client.get path: '/' do |s|
+      s.on :promise_headers do |h|
+        s.cancel! if h['etag'] == '12345'
+      end
+    end
+    s.block!
+    @client.goaway!
+    @client.block!
+    assert s.pushes.empty?
+  end
 
 end

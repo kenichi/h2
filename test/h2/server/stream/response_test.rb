@@ -16,11 +16,6 @@ class ResponseTest < Minitest::Test
     assert r.body.empty?
   end
 
-  def test_construction_with_symbol_status
-    r = H2::Server::Stream::Response.new stream: nil, status: :not_found
-    assert_equal 404, r.status
-  end
-
   def test_constructtion_with_string_body
     r = H2::Server::Stream::Response.new stream: nil, status: 200, body: 'ohai'
     assert_equal 'ohai', r.body
