@@ -1,7 +1,7 @@
 h2 changelog
 ============
 
-### 0.7.0 31 jul 2018
+### 0.7.0 2 aug 2018
 
 * `Server::Stream::Request#path` now removes query string
 * add `H2::Server::Stream::Request#query_string`

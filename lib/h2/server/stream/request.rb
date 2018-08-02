@@ -44,7 +44,9 @@ module H2
         # retreive the path from the stream request headers
         #
         def path
-          @path ||= headers[PATH_KEY]&.split('?')&.first
+          return @path if defined?(@path)
+          @path = headers[PATH_KEY]
+          @path = @path.split('?').first if @path
         end
 
         # retreive the query string from the stream request headers
