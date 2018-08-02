@@ -1,3 +1,4 @@
+require 'h2/server/stream/event_source'
 require 'h2/server/stream/request'
 require 'h2/server/stream/response'
 require 'h2/server/push_promise'
@@ -120,6 +121,16 @@ module H2
         Logger.__send__ level, "[stream #{@stream.id}] #{msg}"
       end
 
+      # make this stream into an SSE event source
+      #
+      # raises +StreamError+ if the request's content-type is not valid
+      #
+      # @return [H2::Server::Stream::EventSource]
+      #
+      def to_eventsource headers: {}
+        EventSource.new stream: self, headers: headers
+      end
+
       protected
 
       # bind parser events to this instance
@@ -174,5 +185,7 @@ module H2
       end
 
     end
+
+    class StreamError < StandardError; end
   end
 end

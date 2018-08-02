@@ -1,6 +1,14 @@
 h2 changelog
 ============
 
+### 0.7.0 31 jul 2018
+
+* `Server::Stream::Request#path` now removes query string
+* add `H2::Server::Stream::Request#query_string`
+* `H2::Server::Stream::Response` body now accepts any object that `respond_to? :each`
+* remove Reel completely, base from Celluloid::IO
+* add SSE support
+
 ### 0.6.1 27 jul 2018
 
 * fix race between reading and sending first frame

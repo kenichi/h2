@@ -161,6 +161,22 @@ module H2
 
   end
 
+  module HeaderStringifier
+
+    private
+    def stringify_headers hash
+      hash.keys.each do |k|
+        hash[k] = hash[k].to_s unless String === hash[k]
+        if Symbol === k
+          key = k.to_s.gsub '_', '-'
+          hash[key] = hash.delete k
+        end
+      end
+      hash
+    end
+
+  end
+
 end
 
 require 'h2/client'

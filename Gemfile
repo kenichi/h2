@@ -7,7 +7,7 @@ group :concurrent_ruby do
 end
 
 group :celluloid do
-  gem 'celluloid'
+  gem 'celluloid', '~> 0.17', '>= 0.17.3'
 end
 
 group :development, :test do
@@ -15,5 +15,5 @@ group :development, :test do
   gem 'certificate_authority'
   gem 'guard-rake'
   gem 'pry-byebug', platforms: [:mri]
-  gem 'reel', '0.6.1'
+  gem 'celluloid-io', '~> 0.17', '>= 0.17.3'
 end

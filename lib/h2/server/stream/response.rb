@@ -2,6 +2,7 @@ module H2
   class Server
     class Stream
       class Response
+        include HeaderStringifier
 
         attr_reader :body, :content_length, :headers, :status, :stream
 
@@ -48,19 +49,16 @@ module H2
           stream.request
         end
 
-        # send the headers and body out on +s+, an +HTTP2::Stream+ object
+        # send the headers and body out on +s+, an +HTTP2::Stream+ object, and
+        # close the stream when complete.
         #
         # NOTE: +:status+ must come first?
         #
         def respond_on s
           headers = { STATUS_KEY => @status.to_s }.merge @headers
           s.headers stringify_headers(headers)
-          case
-          when String === @body
+          if String === @body
             s.data @body
-          when @body.respond_to?(:each)
-            final = @body.each {|res| s.data res, end_stream: false}
-            s.data final
           else
             stream.log :error, "unexpected @body: #{caller[0]}"
           end
@@ -72,19 +70,6 @@ module H2
           %{#{request.addr} "#{request.method} #{request.path} HTTP/2" #{status} #{content_length}}
         end
         alias to_str to_s
-
-        private
-
-        def stringify_headers hash
-          hash.keys.each do |k|
-            hash[k] = hash[k].to_s unless String === hash[k]
-            if Symbol === k
-              key = k.to_s.gsub '_', '-'
-              hash[key] = hash.delete k
-            end
-          end
-          hash
-        end
 
       end
     end
