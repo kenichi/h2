@@ -52,7 +52,7 @@ module H2
       # closes this connection's socket if attached
       #
       def close
-        socket.close if socket && attached?
+        socket.close if socket && attached? && !closed?
       end
 
       # is this connection's socket closed?
