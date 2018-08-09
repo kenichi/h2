@@ -44,7 +44,7 @@ module H2
           end
         end
       end
-      @client = H2::Client.new host: @host, port: @port, tls: false
+      @client = H2::Client.new host: @host, port: @port, lazy: false, tls: false
     end
 
     def teardown

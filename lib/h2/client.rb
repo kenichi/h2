@@ -10,6 +10,7 @@ module H2
     PARSER_EVENTS = [
       :close,
       :frame,
+      :frame_sent,
       :goaway,
       :promise
     ]
@@ -28,12 +29,13 @@ module H2
     # @param [String] host IP address or hostname
     # @param [Integer] port TCP port (default: 443)
     # @param [String,URI] url full URL to parse (optional: existing +URI+ instance)
+    # @param [Boolean] lazy if true, awaits first stream to initiate connection (default: true)
     # @param [Hash,FalseClass] tls TLS options (optional: +false+ do not use TLS)
     # @option tls [String] :cafile path to CA file
     #
     # @return [H2::Client]
     #
-    def initialize host: nil, port: 443, url: nil, tls: {}
+    def initialize host: nil, port: 443, url: nil, lazy: true, tls: {}
       raise ArgumentError if url.nil? && (host.nil? || port.nil?)
 
       if url
@@ -48,24 +50,34 @@ module H2
         @scheme = tls ? 'https' : 'http'
       end
 
-      @tls     = tls
-      @streams = {}
-      @socket  = TCPSocket.new(@host, @port)
-      @socket  = tls_socket @socket if @tls
-      @client  = HTTP2::Client.new
-
-      @first   = true
-      @reading = false
+      @tls       = tls
+      @streams   = {}
+      @client    = HTTP2::Client.new
+      @read_gate = ReadGate.new
 
       init_blocking
       yield self if block_given?
       bind_events
+
+      connect unless lazy
+    end
+
+    # initiate the connection
+    #
+    def connect
+      @socket = TCPSocket.new(@host, @port)
+      @socket = tls_socket @socket if @tls
+      read
+    end
+
+    def connected?
+      !!@socket
     end
 
     # @return true if the connection is closed
     #
     def closed?
-      @socket.closed?
+      connected? && @socket.closed?
     end
 
     # close the connection
@@ -77,14 +89,6 @@ module H2
 
     def eof?
       @socket.eof?
-    end
-
-    def reading?
-      @mutex.synchronize { @reading }
-    end
-
-    def reading!
-      @mutex.synchronize { @reading = true }
     end
 
     # send a goaway frame and wait until the connection is closed
@@ -137,9 +141,10 @@ module H2
     # @return [H2::Stream]
     #
     def request method:, path:, headers: {}, params: {}, body: nil, &block
+      connect unless connected?
       s = @client.new_stream
-      stream = add_stream method: method, path: path, stream: s, &block
       add_params params, path unless params.empty?
+      stream = add_stream method: method, path: path, stream: s, &block
 
       h = build_headers method: method, path: path, headers: headers
       s.headers h, end_stream: body.nil?
@@ -205,7 +210,8 @@ module H2
     # creates a new +Thread+ to read the given number of bytes each loop from
     # the current +@socket+
     #
-    # NOTE: initial client frames (settings, etc) should be sent first!
+    # NOTE: initial client frames (settings, etc) should be sent first, since
+    #       this is a separate thread, take care to block until this happens
     #
     # NOTE: this is the override point for celluloid actor pool or concurrent
     #       ruby threadpool support
@@ -215,7 +221,7 @@ module H2
     def read maxlen = DEFAULT_MAXLEN
       main = Thread.current
       @reader = Thread.new do
-        reading!
+        @read_gate.block!
         begin
           _read maxlen
         rescue => e
@@ -300,9 +306,17 @@ module H2
         @socket.write bytes
       end
       @socket.flush
+    end
 
-      @first = false if @first
-      read unless @first or @reading
+    # frame_sent callback for parser: used to wait for initial settings frame
+    # to be sent by the client (post-connection-preface) before the read thread
+    # responds to server settings frame with ack
+    #
+    def on_frame_sent frame
+      if @read_gate.first && frame[:type] == :settings
+        @read_gate.first = false
+        @read_gate.unblock!
+      end
     end
 
     # fake exceptionless IO for writing on older ruby versions
@@ -401,6 +415,17 @@ module H2
     end
 
     prepend ExceptionlessIO if H2.exceptionless_io?
+
+    class ReadGate
+      include Blockable
+
+      attr_accessor :first
+
+      def initialize
+        init_blocking
+        @first = true
+      end
+    end
 
   end
 end

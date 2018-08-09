@@ -18,21 +18,21 @@ class H2::ClientTest < H2::WithServerTest
   def test_basic_client
     assert !!@client
     assert !!@client.socket
-    assert !@client.closed?
+    refute @client.closed?
     assert @client.streams.empty?
   end
 
-  def test_reading_starts_after_first_frame_sent
+  def test_reading_starts_after_first_settings_frame_sent
+    sleep 0.1; Thread.pass
+    assert_equal 'sleep', @client.reader.status
     f = HTTP2::Framer.new
-    @client.on_frame f.generate({
-      type: :settings,
-      stream: 0,
-      payload: [
-        [:settings_max_concurrent_streams, 10],
-        [:settings_initial_window_size, 0x7fffffff],
-      ]
-    })
-    assert @client.reader.alive?
+    @client.on_frame_sent type: :settings,
+                          stream: 0,
+                          payload: [
+                            [:settings_max_concurrent_streams, 10],
+                            [:settings_initial_window_size, 0x7fffffff],
+                          ]
+    assert_equal 'run', @client.reader.status
   end
 
   H2::REQUEST_METHODS.each do |m|
@@ -145,6 +145,48 @@ class H2::ClientTest < H2::WithServerTest
     ts.each {|t| refute t.join(3).nil?}
     refute @client.closed?
     count_hash {|c| assert c.values.all? {|c| c == 0}}
+  end
+
+end
+
+class H2::LazyClientTest < Minitest::Test
+
+  def setup
+    @host = '127.0.0.1'
+    @port = 45670
+    with_server_test = self
+
+    @server = H2::Server::HTTP.new host: @host, port: @port do |connection|
+      connection.each_stream do |stream|
+        if with_server_test.handler
+          with_server_test.handler[stream]
+        else
+          go = with_server_test.verify headers: stream.request.headers,
+                                     body: stream.request.body
+          stream.respond status: 200
+          connection.goaway if go
+        end
+      end
+    end
+    @client = H2::Client.new host: @host, port: @port, tls: false
+  end
+
+  def test_lazy_client
+    assert !!@client
+    assert !@client.socket
+    refute @client.closed?
+    assert @client.streams.empty?
+    @client.connect
+    assert !!@client.socket
+    refute @client.closed?
+    @client.close
+    assert @client.closed?
+  end
+
+  def teardown
+    @client.close unless @client.closed?
+    @server.terminate
+    @stream_handler = nil
   end
 
 end

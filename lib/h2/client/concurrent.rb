@@ -18,7 +18,7 @@ module H2
       def read maxlen = DEFAULT_MAXLEN
         main = Thread.current
         @reader = self.class.thread_pool.post do
-          reading!
+          @read_gate.block!
           begin
             _read maxlen
           rescue => e

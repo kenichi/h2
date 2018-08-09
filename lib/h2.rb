@@ -29,6 +29,9 @@ module H2
     :put
   ]
 
+  CONTENT_TYPE_KEY          = 'content-type'
+  EVENT_SOURCE_CONTENT_TYPE = 'text/event-stream'
+
   Logger = ::Logger.new STDOUT
 
   class << self
@@ -108,11 +111,11 @@ module H2
       @mutex.synchronize { @condition.wait @mutex, timeout } if @condition
     end
 
-    def unblock!
+    def unblock! remove_condition: true
       return unless @condition
       @mutex.synchronize do
         @condition.broadcast
-        @condition = nil
+        @condition = nil if remove_condition
       end
     end
 

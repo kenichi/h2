@@ -7,8 +7,8 @@ module H2
         DATA_TEMPL  = "data: %s\n\n"
         EVENT_TEMPL = "event: %s\n#{DATA_TEMPL}"
         SSE_HEADER  = {
-          STATUS_KEY    => '200',
-          :content_type => 'text/event-stream'
+          STATUS_KEY => '200',
+          CONTENT_TYPE_KEY => EVENT_SOURCE_CONTENT_TYPE
         }
 
         # build and return +EventSource+ instance, ready for pushing out data
@@ -35,7 +35,7 @@ module H2
         #
         def check_accept_header
           accept = @stream.request.headers['accept']
-          unless accept == SSE_HEADER[:content_type]
+          unless accept == SSE_HEADER[CONTENT_TYPE_KEY]
             raise StreamError, "invalid header accept: #{accept}"
           end
         end
