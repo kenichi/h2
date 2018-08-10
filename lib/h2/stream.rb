@@ -32,6 +32,8 @@ module H2
       @pushes  = Set.new
       @stream  = stream
 
+      @eventsource = false
+
       init_blocking
       yield self if block_given?
       bind_events
@@ -59,6 +61,13 @@ module H2
     #
     def push?
       @push
+    end
+
+    # @return [Boolean] true if this +Stream+ is connected to an +EventSource+
+    #
+    def eventsource?
+      block!
+      @eventsource
     end
 
     # add a push promise +Stream+ to this +Stream+'s list of "child" pushes
@@ -91,8 +100,16 @@ module H2
     # @return [String] response headers (blocks)
     #
     def body
-      block!
-      @body
+      if @eventsource
+        loop do
+          event = @body.pop
+          break if event == :close
+          yield event
+        end
+      else
+        block!
+        @body
+      end
     end
 
     # binds all stream events to their respective on_ handlers
@@ -102,6 +119,7 @@ module H2
         @parent.add_push self if @parent && push?
         @client.last_stream = self
         @closed = true
+        @body << :close if @eventsource
         unblock!
         on :close
       end
@@ -112,6 +130,7 @@ module H2
 
       @stream.on(:data) do |d|
         on :data, d
+        unblock! if @eventsource
         @body << d
       end
     end
@@ -119,10 +138,20 @@ module H2
     # builds +Hash+ from associative array, merges into response headers
     #
     def add_headers h
+      check_event_source h
       h = Hash[h]
       on :headers, h
       @headers.merge! h
-      @headers
+    end
+
+    # checks for event source headers and reconfigures +@body+
+    #
+    def check_event_source h
+      return if @eventsource
+      if h.any? {|e| e[0] == CONTENT_TYPE_KEY && e[1] == EVENT_SOURCE_CONTENT_TYPE }
+        @eventsource = true
+        @body = Queue.new
+      end
     end
 
     # @return [Hash] a simple +Hash+ with +:headers+ and +:body+ keys/values

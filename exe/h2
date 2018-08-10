@@ -58,8 +58,22 @@ OptionParser.new do |o|
     options[:debug] = true
   end
 
+  o.on '-sse', '--eventsource', 'send event-stream headers and print messages as they arrive' do
+    options[:headers]['accept'] = H2::EVENT_SOURCE_CONTENT_TYPE
+  end
+
   o.on '-g', '--goaway', 'send GOAWAY frame when stream is complete' do
     options[:goaway] = true
+  end
+
+  o.on '-h', '--help', 'show this help/usage' do
+    puts o
+    exit
+  end
+
+  o.on '-H [VALUE]', '--header [VALUE]', String, 'include header in request (format: "key: value")' do |h|
+    kv = h.split(':').map &:strip
+    options[:headers][kv[0]] = kv[1]
   end
 
   o.on '-v', '--verbose', 'turn on verbosity' do
@@ -135,7 +149,12 @@ if options[:verbose]
   s.headers.each {|k,v| puts "<< #{k}: #{v}".yellow}
 end
 
-puts s.body
+if s.eventsource?
+  s.body {|e| puts e}
+else
+  puts s.body
+end
+
 c.block! if options[:block] or !s.pushes.empty?
 s.pushes.each do |p|
   puts "push promise: #{p.headers[':path']}"

@@ -30,8 +30,13 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
       stream.respond status: 404
 
     when '/events'
-      es = stream.to_eventsource
-      event_sources << es
+      if stream.request.method == :delete
+        event_sources.each &:close
+        event_sources.clear
+        stream.respond status: 200
+      else
+        event_sources << stream.to_eventsource
+      end
 
     when '/msg'
       if stream.request.method == :post
