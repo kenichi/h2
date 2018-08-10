@@ -32,7 +32,7 @@ stream.body #=> "hello, world!\n"
 
 See more server examples:
 
-* [HTTPS with SNI](https://github.com/kenichi/h2/blob/master/examples/server/https_hello_world.rb)
+* [HTTPS Hello World](https://github.com/kenichi/h2/blob/master/examples/server/https_hello_world.rb)
 * [Push Promises](https://github.com/kenichi/h2/blob/master/examples/server/push_promise.rb)
 * [SSE/EventSource](https://github.com/kenichi/h2/blob/master/examples/server/sse.rb)
 
