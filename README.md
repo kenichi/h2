@@ -11,9 +11,10 @@ H2 uses:
 
 ## Server Usage
 
-Server API is currently optional, and must be required separately. The server
-uses [Celluloid::IO](https://github.com/celluloid/celluloid-io), but since this API is optional,
-celluloid-io must be separately added to `Gemfile`. It is currently based on `celluloid-io-0.17.3`.
+Server API is currently optional, so `h2/server` must be required separately.
+The server uses [Celluloid::IO](https://github.com/celluloid/celluloid-io), but
+h2's gemspec does not require it, so celluloid-io must be separately added to
+`Gemfile`. It is currently based on `celluloid-io-0.17.3`.
 
 ```ruby
 require 'h2/server'
@@ -29,7 +30,11 @@ stream = H2.get url: "http://#{addr}:#{port}", tls: false
 stream.body #=> "hello, world!\n"
 ```
 
-See [examples](https://github.com/kenichi/h2/tree/master/examples/server/).
+See more server examples:
+
+* [HTTPS with SNI](https://github.com/kenichi/h2/blob/master/examples/server/https_hello_world.rb)
+* [Push Promises](https://github.com/kenichi/h2/blob/master/examples/server/push_promise.rb)
+* [SSE/EventSource](https://github.com/kenichi/h2/blob/master/examples/server/sse.rb)
 
 ## Client Usage
 

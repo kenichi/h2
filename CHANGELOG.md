@@ -1,6 +1,11 @@
 h2 changelog
 ============
 
+### 0.8.0 10 aug 2018
+
+* fix read/settings ack race (https://httpwg.org/specs/rfc7540.html#ConnectionHeader)
+* add SSE/EventSource support
+
 ### 0.7.0 2 aug 2018
 
 * `Server::Stream::Request#path` now removes query string

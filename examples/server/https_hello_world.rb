@@ -8,6 +8,9 @@ port       = 1234
 addr       = Socket.getaddrinfo('localhost', port).first[3]
 certs_dir  = File.expand_path '../../../tmp/certs', __FILE__
 
+# if not using SNI, we may pass the underlying opts directly, and the same TLS
+# cert/key will be used for all incoming connections.
+#
 tls = {
   cert: certs_dir + '/server.crt',
   key:  certs_dir + '/server.key',
