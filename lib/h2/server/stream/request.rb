@@ -35,7 +35,7 @@ module H2
         # retreive the HTTP method as a lowercase +Symbol+
         #
         def method
-          return @method unless @method.nil?
+          return @method if defined? @method
           @method = headers[METHOD_KEY]
           @method = @method.downcase.to_sym if @method
           @method

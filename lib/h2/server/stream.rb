@@ -24,7 +24,8 @@ module H2
         :data
       ]
 
-      attr_reader :connection,
+      attr_reader :complete,
+                  :connection,
                   :push_promises,
                   :request,
                   :response,
@@ -62,7 +63,7 @@ module H2
       # task on the reactor to deliver the data
       #
       def push_promise *args
-        pp = push_promise_for *args
+        pp = push_promise_for(*args)
         make_promise pp
         @connection.server.async.handle_push_promise pp
       end
@@ -95,7 +96,7 @@ module H2
         if block
           @complete = block
         elsif @completed = (@responded and push_promises_complete?)
-          @complete[] if Proc === @complete
+          @complete[] if Proc === complete
           true
         else
           false

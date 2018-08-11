@@ -62,7 +62,7 @@ module H2
           else
             stream.log :error, "unexpected @body: #{caller[0]}"
           end
-        rescue ::HTTP2::Error::StreamClosed => sc
+        rescue ::HTTP2::Error::StreamClosed
           stream.log :warn, "stream closed early by client"
         end
 

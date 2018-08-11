@@ -88,7 +88,7 @@ class PushPromiseTest < H2::WithServerHandlerTest
           end
         end
       end
-      s = c.get path: '/'
+      c.get path: '/'
       c.block!
     end
 

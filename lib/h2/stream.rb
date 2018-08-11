@@ -11,7 +11,7 @@ module H2
       :data
     ]
 
-    attr_reader :body, :client, :headers, :parent, :pushes, :stream
+    attr_reader :client, :parent, :pushes, :stream
 
     # create a new h2 stream
     #

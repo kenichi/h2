@@ -45,7 +45,7 @@ module H2
         def init_response
           headers = SSE_HEADER.merge @headers
           @parser.headers stringify_headers(headers)
-        rescue ::HTTP2::Error::StreamClosed => sc
+        rescue ::HTTP2::Error::StreamClosed
           @stream.log :warn, "stream closed early by client"
         end
 

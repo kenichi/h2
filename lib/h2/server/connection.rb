@@ -27,6 +27,10 @@ module H2
         @parser   = ::HTTP2::Server.new
         @attached = true
 
+        # set a default stream handler that raises +NotImplementedError+
+        #
+        @each_stream = ->(s){ raise NotImplementedError }
+
         yield self if block_given?
 
         bind_events

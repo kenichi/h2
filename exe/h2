@@ -23,10 +23,12 @@ options = {
   debug: false,
   headers: {},
   goaway: false,
-  method: nil,
+  method: :get,
   tls: {},
   verbose: false
 }
+
+options[:tls][:ca_file] = ENV['H2_CAFILE'] if ENV['H2_CAFILE']
 
 OptionParser.new do |o|
 
@@ -36,7 +38,7 @@ OptionParser.new do |o|
     options[:block] = true
   end
 
-  o.on '--cafile [FILE]', String, 'certificate authority bundle' do |ca|
+  o.on '--cafile [FILE]', String, "certificate authority bundle (overrides ENV['H2_CAFILE'])" do |ca|
     raise ArgumentError, "invalid CA file: #{ca}" unless ca && File.exist?(ca)
     options[:tls][:ca_file] = ca
   end
@@ -72,6 +74,7 @@ OptionParser.new do |o|
   end
 
   o.on '-H [VALUE]', '--header [VALUE]', String, 'include header in request (format: "key: value")' do |h|
+    warn "psuedo-headers not supported via CLI" if h[0] == ':'
     kv = h.split(':').map &:strip
     options[:headers][kv[0]] = kv[1]
   end
@@ -86,15 +89,15 @@ OptionParser.new do |o|
     options[:method] = meth
   end
 
-  o.on '--version', 'print version information' do
-    puts "#{H2::USER_AGENT['user-agent']} using http-2-#{HTTP2::VERSION}"
+  o.on '-V', '--version', 'print version information' do
+    puts "#{H2::USER_AGENT['user-agent']}"
+    puts "  * http-2-#{HTTP2::VERSION}"
+    puts "  * #{OpenSSL::OPENSSL_VERSION}"
+    puts "  * CA file: #{options[:tls][:ca_file]}" if options[:tls][:ca_file]
     exit
   end
 
 end.parse!
-
-options[:method] ||= :get
-options[:tls][:ca_file] ||= ENV['H2_CAFILE'] if ENV['H2_CAFILE']
 
 # }}}
 

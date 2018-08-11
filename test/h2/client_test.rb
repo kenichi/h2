@@ -25,7 +25,6 @@ class H2::ClientTest < H2::WithServerTest
   def test_reading_starts_after_first_settings_frame_sent
     sleep 0.1; Thread.pass
     assert_equal 'sleep', @client.reader.status
-    f = HTTP2::Framer.new
     @client.on_frame_sent type: :settings,
                           stream: 0,
                           payload: [
@@ -102,8 +101,8 @@ class H2::ClientTest < H2::WithServerTest
   def test_multiple_serial_requests
     @verify_headers = proc do |h|
       m = h[H2::METHOD_KEY].downcase.to_sym
-      count_hash do |c|
-        c[m] -= 1
+      count_hash do |ch|
+        ch[m] -= 1
         count_done?
       end
     end
@@ -126,9 +125,9 @@ class H2::ClientTest < H2::WithServerTest
     @verify_headers = proc do |h|
       m = h[H2::METHOD_KEY].downcase.to_sym
       ret = true
-      count_hash do |c|
-        c[m] -= 1
-        ret = c.values.all? {|c| c == 0}
+      count_hash do |ch|
+        ch[m] -= 1
+        ret = ch.values.all? {|e| e == 0}
       end
       ret
     end
@@ -144,7 +143,7 @@ class H2::ClientTest < H2::WithServerTest
     end
     ts.each {|t| refute t.join(3).nil?}
     refute @client.closed?
-    count_hash {|c| assert c.values.all? {|c| c == 0}}
+    count_hash {|ch| assert ch.values.all? {|e| e == 0}}
   end
 
 end

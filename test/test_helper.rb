@@ -20,6 +20,7 @@ module H2
   class WithServerTest < Minitest::Test
 
     attr_accessor :handler
+    attr_reader :verify_headers, :verify_body
 
     def initialize *a
       @parent_thread = Thread.current
@@ -55,8 +56,8 @@ module H2
 
     def verify headers:, body:
       h = b = true
-      h = @verify_headers[headers] if Proc === @verify_headers
-      b = @verify_body[body] if Proc === @verify_body
+      h = verify_headers[headers] if Proc === verify_headers
+      b = verify_body[body] if Proc === verify_body
       h && b
     rescue => e
       @parent_thread.raise e
@@ -100,7 +101,7 @@ module H2
 
       begin
         server = H2::Server::HTTP.new host: @host, port: @port, spy: false do |c|
-          c.each_stream &handler
+          c.each_stream(&handler)
         end
         block[server]
       ensure

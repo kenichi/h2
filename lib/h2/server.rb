@@ -6,19 +6,6 @@ module H2
 
   CONTENT_LENGTH_KEY = 'content-length'
 
-  class << self
-
-    def alpn?
-      !jruby? && OpenSSL::OPENSSL_VERSION_NUMBER >= ALPN_OPENSSL_MIN_VERSION && RUBY_VERSION >= '2.3'
-    end
-
-    def jruby?
-      return @jruby if defined? @jruby
-      @jruby = RUBY_ENGINE == 'jruby'
-    end
-
-  end
-
   # base H2 server, a +Celluoid::IO+ production
   #
   class Server

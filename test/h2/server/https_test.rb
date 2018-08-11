@@ -3,9 +3,9 @@ require File.expand_path '../../../test_helper', __FILE__
 class HTTPSTest < H2::WithServerHandlerTest
 
   def setup
-    @certs_dir = Pathname.new File.expand_path '../../../../tmp/certs', __FILE__
+    @certs_dir = Pathname.new File.expand_path('../../../../tmp/certs', __FILE__)
     @ca_file = @certs_dir.join('ca.crt').to_s
-    require_relative '../../support/create_certs' unless File.exist? @ca_file
+    require 'support/create_certs' unless File.exist? @ca_file
 
     @server_cert = @certs_dir.join("server.crt").read
     @server_key = @certs_dir.join("server.key").read
@@ -24,7 +24,7 @@ class HTTPSTest < H2::WithServerHandlerTest
 
     begin
       server = H2::Server::HTTPS.new host: @host, port: @port, cert: @server_cert, key: @server_key do |c|
-        c.each_stream &handler
+        c.each_stream(&handler)
       end
       yield server
     ensure

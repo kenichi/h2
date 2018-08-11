@@ -34,7 +34,14 @@ class ConnectionTest < Minitest::Test
 
       assert c.attached?
       refute c.closed?
-      assert_nil c.each_stream
+
+      ese = nil
+      begin
+        c.each_stream[Object.new]
+      rescue NotImplementedError => ese
+      end
+      assert_instance_of NotImplementedError, ese
+
       assert_instance_of HTTP2::Server, c.parser
       assert_equal server, c.server
       assert_equal peer, c.socket
@@ -57,7 +64,7 @@ class ConnectionTest < Minitest::Test
 
   def test_parser_event_binding
     p = parser
-    c = H2::Server::Connection.new socket: nil, server: nil do |c|
+    H2::Server::Connection.new socket: nil, server: nil do |c|
       c.instance_variable_set :@parser, p
     end
     p.verify
@@ -68,8 +75,8 @@ class ConnectionTest < Minitest::Test
     10.times { p.expect :<<, nil, [String] }
 
     with_socket_pair do |client, peer|
-      c = H2::Server::Connection.new socket: peer, server: nil do |c|
-        c.instance_variable_set :@parser, p
+      c = H2::Server::Connection.new socket: peer, server: nil do |con|
+        con.instance_variable_set :@parser, p
       end
       reader = Thread.new { c.read }
       5.times { client.write 'a'*8192}

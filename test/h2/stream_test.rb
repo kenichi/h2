@@ -18,9 +18,9 @@ class H2::StreamTest < H2::WithServerTest
   def test_bindings
     mock = Minitest::Mock.new
     H2::Stream::STREAM_EVENTS.each {|e| mock.expect e, nil }
-    s = @client.get path: '/' do |s|
+    s = @client.get path: '/' do |_s|
       H2::Stream::STREAM_EVENTS.each do |e|
-        s.on(e){ mock.__send__ e }
+        _s.on(e){ mock.__send__ e }
       end
     end
     s.block!
@@ -78,9 +78,9 @@ class H2::StreamTest < H2::WithServerTest
       Celluloid.sleep 1
       pp.keep
     end
-    s = @client.get path: '/' do |s|
-      s.on :promise_headers do |h|
-        s.cancel! if h['etag'] == '12345'
+    s = @client.get path: '/' do |_s|
+      _s.on :promise_headers do |h|
+        _s.cancel! if h['etag'] == '12345'
       end
     end
     s.block!

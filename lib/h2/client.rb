@@ -66,29 +66,29 @@ module H2
     #
     def connect
       @socket = TCPSocket.new(@host, @port)
-      @socket = tls_socket @socket if @tls
+      @socket = tls_socket socket if @tls
       read
     end
 
     def connected?
-      !!@socket
+      !!socket
     end
 
     # @return true if the connection is closed
     #
     def closed?
-      connected? && @socket.closed?
+      connected? && socket.closed?
     end
 
     # close the connection
     #
     def close
       unblock!
-      @socket.close unless closed?
+      socket.close unless closed?
     end
 
     def eof?
-      @socket.eof?
+      socket.eof?
     end
 
     # send a goaway frame and wait until the connection is closed
@@ -204,7 +204,7 @@ module H2
     # maintain a ivar for the +Array+ to send to +IO.select+
     #
     def selector
-      @selector ||= [@socket]
+      @selector ||= [socket]
     end
 
     # creates a new +Thread+ to read the given number of bytes each loop from
@@ -268,7 +268,7 @@ module H2
     # @param [Integer] maxlen maximum number of bytes to read
     #
     def read_from_socket maxlen
-      @socket.read_nonblock maxlen
+      socket.read_nonblock maxlen
     rescue IO::WaitReadable
       :wait_readable
     end
@@ -290,12 +290,12 @@ module H2
     def on_frame bytes
       on :frame, bytes
 
-      if ::H2::Client::TCPSocket === @socket
+      if ::H2::Client::TCPSocket === socket
         total = bytes.bytesize
         loop do
           n = write_to_socket bytes
           if n == :wait_writable
-            IO.select nil, @socket.selector
+            IO.select nil, socket.selector
           elsif n < total
             bytes = bytes.byteslice n, total
           else
@@ -303,9 +303,9 @@ module H2
           end
         end
       else
-        @socket.write bytes
+        socket.write bytes
       end
-      @socket.flush
+      socket.flush
     end
 
     # frame_sent callback for parser: used to wait for initial settings frame
@@ -324,7 +324,7 @@ module H2
     # @param [String] bytes
     #
     def write_to_socket bytes
-      @socket.write_nonblock bytes
+      socket.write_nonblock bytes
     rescue IO::WaitWritable
       :wait_writable
     end
@@ -405,11 +405,11 @@ module H2
     module ExceptionlessIO
 
       def read_from_socket maxlen
-        @socket.read_nonblock maxlen, exception: false
+        socket.read_nonblock maxlen, exception: false
       end
 
       def write_to_socket bytes
-        @socket.write_nonblock bytes, exception: false
+        socket.write_nonblock bytes, exception: false
       end
 
     end

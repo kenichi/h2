@@ -1,5 +1,5 @@
 # coding: utf-8
-require_relative './lib/h2/version'
+require File.expand_path '../lib/h2/version', __FILE__
 
 Gem::Specification.new do |spec|
   spec.name          = "h2"
@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'http-2', '~> 0.10', '>= 0.10.0'
   spec.add_dependency 'colored', '1.2'
 
-  spec.add_development_dependency "bundler", "~> 1.15"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "bundler", "~> 1.16"
+  spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "minitest", "~> 5.0"
 end
