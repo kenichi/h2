@@ -1,6 +1,11 @@
 h2 changelog
 ============
 
+### 0.8.1
+
+* update rake / bundler dep versions
+* refactors for interpreter warnings
+
 ### 0.8.0 10 aug 2018
 
 * fix read/settings ack race (https://httpwg.org/specs/rfc7540.html#ConnectionHeader)

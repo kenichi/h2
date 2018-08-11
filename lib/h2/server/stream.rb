@@ -150,14 +150,14 @@ module H2
       # called by +@stream+ when this stream is activated
       #
       def on_active
-        log :debug, 'active' if H2.verbose?
+        log :debug, 'active'
         @request = H2::Server::Stream::Request.new self
       end
 
       # called by +@stream+ when this stream is closed
       #
       def on_close
-        log :debug, 'close' if H2.verbose?
+        log :debug, 'close'
         on_complete
         @closed = true
       end
@@ -166,14 +166,14 @@ module H2
       #
       def on_headers h
         incoming_headers = Hash[h]
-        log :debug, "headers: #{incoming_headers}" if H2.verbose?
+        log :debug, "headers: #{incoming_headers}"
         @request.headers.merge! incoming_headers
       end
 
       # called by +@stream+ with a +String+ body part
       #
       def on_data d
-        log :debug, "data: <<#{d}>>" if H2.verbose?
+        log :debug, "data: <<#{d}>>"
         @request.body << d
       end
 
@@ -181,7 +181,7 @@ module H2
       # is ready for response(s)
       #
       def on_half_close
-        log :debug, 'half_close' if H2.verbose?
+        log :debug, 'half_close'
         connection.server.async.handle_stream self
       end
 

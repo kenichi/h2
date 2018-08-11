@@ -35,7 +35,7 @@ module H2
 
         bind_events
 
-        Logger.debug "new H2::Connection: #{self}" if H2.verbose?
+        Logger.debug "new H2::Connection: #{self}"
       end
 
       # is this connection still attached to the server reactor?
@@ -98,7 +98,7 @@ module H2
 
         rescue => e
           Logger.error "Exception: #{e.message} - closing socket"
-          STDERR.puts e.backtrace if H2.verbose?
+          STDERR.puts e.backtrace if H2::Logger.level == ::Logger::DEBUG
           close
 
         end

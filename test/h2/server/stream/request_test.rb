@@ -24,7 +24,7 @@ class RequestTest < Minitest::Test
   end
 
   def test_access_header_keys
-    mock_stream = stream
+    mock_stream = stream ids: 2
     s = H2::Server::Stream.new connection: nil, stream: mock_stream
     s.__send__ :on_active
     s.__send__ :on_headers, {

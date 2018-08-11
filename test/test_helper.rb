@@ -67,8 +67,13 @@ module H2
   end
 
   module MockStream
-    def stream
+    @@count = 0
+
+    def stream ids: 0
+      @@count += 1
       s = Minitest::Mock.new
+      ids.times { s.expect :id, @@count }
+
       H2::Server::Stream::STREAM_EVENTS.each do |se|
         s.expect :on, nil, [se]
       end

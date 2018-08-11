@@ -16,7 +16,7 @@ class ServerStreamTest < Minitest::Test
   end
 
   def test_create_new_request_on_active
-    s = stream
+    s = stream ids: 1
     str = H2::Server::Stream.new connection: nil, stream: s
     assert_nil str.request
     str.__send__ :on_active
@@ -24,7 +24,7 @@ class ServerStreamTest < Minitest::Test
   end
 
   def test_merges_incoming_headers_into_request
-    s = stream
+    s = stream ids: 2
     str = H2::Server::Stream.new connection: nil, stream: s
     str.__send__ :on_active
     assert_instance_of H2::Server::Stream::Request, str.request
@@ -33,7 +33,7 @@ class ServerStreamTest < Minitest::Test
   end
 
   def test_append_data_to_request
-    s = stream
+    s = stream ids: 2
     str = H2::Server::Stream.new connection: nil, stream: s
     str.__send__ :on_active
     assert_instance_of H2::Server::Stream::Request, str.request
@@ -47,7 +47,7 @@ class ServerStreamTest < Minitest::Test
     c.expect :async, c
     c.expect :handle_stream, nil, [H2::Server::Stream]
 
-    s = stream
+    s = stream ids: 2
     str = H2::Server::Stream.new connection: c, stream: s
     str.__send__ :on_active
     str.__send__ :on_half_close
