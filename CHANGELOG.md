@@ -1,7 +1,7 @@
 h2 changelog
 ============
 
-### 0.8.1
+### 0.8.1 11 aug 2018
 
 * update rake / bundler dep versions
 * refactors for interpreter warnings

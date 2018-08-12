@@ -129,7 +129,6 @@ module H2
   module FrameDebugger
 
     def self.included base
-      H2.verbose!
       base::PARSER_EVENTS.push :frame_sent, :frame_received
     end
 

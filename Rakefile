@@ -1,10 +1,11 @@
 require 'bundler/gem_tasks'
 require 'rake/testtask'
 require 'fileutils'
+require File.expand_path '../test/support/create_certs', __FILE__
 
 task default: :test
 
-Rake::TestTask.new :test => ['test:certs'] do |t|
+Rake::TestTask.new :test do |t|
   t.test_files = FileList['test/**/*_test.rb']
 end
 
@@ -31,13 +32,7 @@ namespace :test do
     end
   end
 
-  task :certs do
-    certs_dir = Pathname.new File.expand_path '../tmp/certs', __FILE__
-    ca_file = certs_dir.join('ca.crt').to_s
-    require File.expand_path('../test/support/create_certs', __FILE__) unless File.exist? ca_file
-  end
-
-  task :nginx, [:tag, :ctx] => [:certs] do |_,args|
+  task :nginx, [:tag, :ctx] do |_,args|
     tag = args.fetch :tag, 'h2_nginx_http2'
     ctx = args.fetch :ctx, 'test/support/nginx'
 

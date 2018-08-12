@@ -5,7 +5,6 @@
 #
 # ---
 
-require 'colored'
 require 'optparse'
 
 begin # {{{
@@ -119,8 +118,8 @@ client[:tls] = options[:tls] unless options[:tls].empty?
 
 c = H2::Client.new **client do |c|
   if options[:debug]
-    c.client.on(:frame_received) {|f| puts "<< #{f.inspect}".yellow}
-    c.client.on(:frame_sent)     {|f| puts ">> #{f.inspect}".green}
+    c.client.on(:frame_received) {|f| puts "<< #{f.inspect}" }
+    c.client.on(:frame_sent)     {|f| puts ">> #{f.inspect}" }
   end
 end
 

@@ -13,10 +13,7 @@ require 'h2/server'
 #
 #       see: test/support/create_certs.rb
 #
-certs_dir    = File.expand_path '../../../tmp/certs', __FILE__
-ca_file      = certs_dir + '/ca.crt'
-create_certs = File.expand_path '../../../test/support/create_certs', __FILE__
-require create_certs unless File.exist? ca_file
+require File.expand_path '../../../test/support/create_certs', __FILE__
 
 # crank up the logger level for testing/example purposes
 #
@@ -29,6 +26,7 @@ puts "*** Starting server on https://localhost:#{port}"
 # if not using SNI, we may pass the underlying opts directly, and the same TLS
 # cert/key will be used for all incoming connections.
 #
+certs_dir = File.expand_path '../../../tmp/certs', __FILE__
 tls = {
   cert: certs_dir + '/server.crt',
   key:  certs_dir + '/server.key',

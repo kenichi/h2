@@ -1,12 +1,11 @@
 require File.expand_path '../../../test_helper', __FILE__
+require 'support/create_certs'
 
 class HTTPSTest < H2::WithServerHandlerTest
 
   def setup
     @certs_dir = Pathname.new File.expand_path('../../../../tmp/certs', __FILE__)
     @ca_file = @certs_dir.join('ca.crt').to_s
-    require 'support/create_certs' unless File.exist? @ca_file
-
     @server_cert = @certs_dir.join("server.crt").read
     @server_key = @certs_dir.join("server.key").read
     @client_cert = @certs_dir.join("client.crt").read

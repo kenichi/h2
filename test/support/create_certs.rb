@@ -1,76 +1,75 @@
 # blatanly stolen from https://github.com/celluloid/reel/blob/master/spec/support/create_certs.rb
 
-require 'fileutils'
-require 'certificate_authority'
+module H2
+  module Test
+    module Certs
 
-certs_dir = File.expand_path '../../../tmp/certs', __FILE__
-FileUtils.mkdir_p(certs_dir)
+      module_function
+      def create
 
-#
-# Certificate Authority
-#
+        require 'fileutils'
+        require 'certificate_authority'
 
-ca = CertificateAuthority::Certificate.new
+        certs_dir = File.expand_path '../../../tmp/certs', __FILE__
+        FileUtils.mkdir_p(certs_dir)
 
-ca.subject.common_name  = 'honestachmed.com'
-ca.serial_number.number = 1
-ca.key_material.generate_key
-ca.signing_entity = true
+        #
+        # Certificate Authority
+        #
 
-ca.sign! 'extensions' => { 'keyUsage' => { 'usage'  => %w(critical keyCertSign) } }
+        ca = CertificateAuthority::Certificate.new
 
-ca_cert_path = File.join(certs_dir, 'ca.crt')
-ca_key_path  = File.join(certs_dir, 'ca.key')
+        ca.subject.common_name  = 'example.test'
+        ca.serial_number.number = 1
+        ca.key_material.generate_key
+        ca.signing_entity = true
 
-File.write ca_cert_path, ca.to_pem
-File.write ca_key_path,  ca.key_material.private_key.to_pem
+        ca.sign! 'extensions' => { 'keyUsage' => { 'usage'  => %w(critical keyCertSign) } }
 
-#
-# Server Certificate
-#
+        ca_cert_path = File.join(certs_dir, 'ca.crt')
+        ca_key_path  = File.join(certs_dir, 'ca.key')
 
-server_cert = CertificateAuthority::Certificate.new
-server_cert.subject.common_name  = '127.0.0.1'
-server_cert.serial_number.number = 1
-server_cert.key_material.generate_key
-server_cert.parent = ca
-server_cert.sign!
+        File.write ca_cert_path, ca.to_pem
+        File.write ca_key_path,  ca.key_material.private_key.to_pem
 
-server_cert_path = File.join(certs_dir, 'server.crt')
-server_key_path  = File.join(certs_dir, 'server.key')
+        #
+        # Server Certificate
+        #
 
-File.write server_cert_path, server_cert.to_pem
-File.write server_key_path,  server_cert.key_material.private_key.to_pem
+        server_cert = CertificateAuthority::Certificate.new
+        server_cert.subject.common_name  = 'localhost'
+        server_cert.serial_number.number = 1
+        server_cert.key_material.generate_key
+        server_cert.parent = ca
+        server_cert.sign!
 
-#
-# Client Certificate
-#
+        server_cert_path = File.join(certs_dir, 'server.crt')
+        server_key_path  = File.join(certs_dir, 'server.key')
 
-client_cert = CertificateAuthority::Certificate.new
-client_cert.subject.common_name  = '127.0.0.1'
-client_cert.serial_number.number = 1
-client_cert.key_material.generate_key
-client_cert.parent = ca
-client_cert.sign!
+        File.write server_cert_path, server_cert.to_pem
+        File.write server_key_path,  server_cert.key_material.private_key.to_pem
 
-client_cert_path = File.join(certs_dir, 'client.crt')
-client_key_path  = File.join(certs_dir, 'client.key')
+        #
+        # Client Certificate
+        #
 
-File.write client_cert_path, client_cert.to_pem
-File.write client_key_path,  client_cert.key_material.private_key.to_pem
+        client_cert = CertificateAuthority::Certificate.new
+        client_cert.subject.common_name  = 'localhost'
+        client_cert.serial_number.number = 1
+        client_cert.key_material.generate_key
+        client_cert.parent = ca
+        client_cert.sign!
 
-#
-# Self-Signed Client Cert
-#
+        client_cert_path = File.join(certs_dir, 'client.crt')
+        client_key_path  = File.join(certs_dir, 'client.key')
 
-client_unsigned_cert = CertificateAuthority::Certificate.new
-client_unsigned_cert.subject.common_name  = '127.0.0.1'
-client_unsigned_cert.serial_number.number = 1
-client_unsigned_cert.key_material.generate_key
-client_unsigned_cert.sign!
+        File.write client_cert_path, client_cert.to_pem
+        File.write client_key_path,  client_cert.key_material.private_key.to_pem
 
-client_unsigned_cert_path = File.join(certs_dir, 'client.unsigned.crt')
-client_unsigned_key_path  = File.join(certs_dir, 'client.unsigned.key')
+      end
 
-File.write client_unsigned_cert_path, client_unsigned_cert.to_pem
-File.write client_unsigned_key_path,  client_unsigned_cert.key_material.private_key.to_pem
+      create unless File.exist? File.expand_path('../../../tmp/certs/ca.crt', __FILE__)
+    end
+  end
+end
+

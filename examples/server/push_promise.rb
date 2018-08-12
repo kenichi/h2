@@ -13,10 +13,7 @@ require 'h2/server'
 #
 #       see: test/support/create_certs.rb
 #
-certs_dir    = File.expand_path '../../../tmp/certs', __FILE__
-ca_file      = certs_dir + '/ca.crt'
-create_certs = File.expand_path '../../../test/support/create_certs', __FILE__
-require create_certs unless File.exist? ca_file
+require File.expand_path '../../../test/support/create_certs', __FILE__
 
 # crank up the logger level for testing/example purposes
 #
@@ -61,6 +58,7 @@ pushed_js = '(()=>{ alert("hello h2 push promise!"); })();'
 # see: https://en.wikipedia.org/wiki/Server_Name_Indication
 # see: https://ruby-doc.org/stdlib-2.5.1/libdoc/openssl/rdoc/OpenSSL/SSL/SSLContext.html#servername_cb
 #
+certs_dir = File.expand_path '../../../tmp/certs', __FILE__
 sni = {
   'localhost' => {
     :cert => certs_dir + '/server.crt',
@@ -87,7 +85,7 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
 
     # check the request path (HTTP/2 psuedo-header ':path')
     #
-    # see +H2::Server::Stream#request+ - access the +H2::Server::Stream::Request+ instance
+    # see +H2::Server::Stream#request+
     #
     if stream.request.path == '/favicon.ico'
 
@@ -139,7 +137,7 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
       #
       js_promise.make_on stream
 
-      # we respond with 200 and our HTML body
+      # respond with 200 and HTML body
       #
       # see +H2::Server::Stream#respond+
       #
