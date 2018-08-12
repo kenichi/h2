@@ -9,7 +9,6 @@ class HTTPSTest < H2::WithServerHandlerTest
     @server_cert = @certs_dir.join("server.crt").read
     @server_key = @certs_dir.join("server.key").read
     @client_cert = @certs_dir.join("client.crt").read
-    @client_cert_unsigned = @certs_dir.join("client.unsigned.crt").read
     @client_key = @certs_dir.join("client.key").read
     @tls_opts = { ca_file: @ca_file }
     super
