@@ -74,6 +74,7 @@ class H2::StreamTest < H2::WithServerTest
   def test_rst_stream_on_push_header
     self.handler = proc do |s|
       pp = s.push_promise_for path: '/ohai', headers: {'etag' => '12345'}, body: 'thar'
+      pp.make_on s
       s.respond status: 200
       Celluloid.sleep 1
       pp.keep
@@ -87,6 +88,28 @@ class H2::StreamTest < H2::WithServerTest
     @client.goaway!
     @client.block!
     assert s.pushes.empty?
+  end
+
+  def test_gzip_content_encoding
+    self.handler = ->(s){ s.respond status: 200, body: 'ohai' }
+    gzipped = Zlib.gzip 'ohai'
+    @stream = @client.get path: '/',
+                          headers: { H2::ACCEPT_ENCODING_KEY => H2::GZIP_ENCODING }
+    @stream.block!
+    assert @stream.ok?
+    assert_equal gzipped.length, @stream.headers[H2::CONTENT_LENGTH_KEY].to_i
+    assert_equal 'ohai', @stream.body
+  end
+
+  def test_deflate_content_encoding
+    self.handler = ->(s){ s.respond status: 200, body: 'ohai' }
+    deflated = Zlib.deflate 'ohai'
+    @stream = @client.get path: '/',
+                          headers: { H2::ACCEPT_ENCODING_KEY => H2::DEFLATE_ENCODING }
+    @stream.block!
+    assert @stream.ok?
+    assert_equal deflated.length, @stream.headers[H2::CONTENT_LENGTH_KEY].to_i
+    assert_equal 'ohai', @stream.body
   end
 
 end

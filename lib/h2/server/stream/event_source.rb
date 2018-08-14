@@ -25,8 +25,11 @@ module H2
           @stream  = stream
           @parser  = @stream.stream
           @headers = headers
+          @gzip    = false
+          @deflate = false
 
           check_accept_header
+          check_accept_encoding
           init_response
         end
 
@@ -37,6 +40,30 @@ module H2
           accept = @stream.request.headers['accept']
           unless accept == SSE_HEADER[CONTENT_TYPE_KEY]
             raise StreamError, "invalid header accept: #{accept}"
+          end
+        end
+
+        # checks the request for accept-encoding headers and processes data &
+        # events accordingly
+        #
+        def check_accept_encoding
+          if accept = @stream.request.headers[ACCEPT_ENCODING_KEY]
+            accept.split(',').map(&:strip).each do |encoding|
+              case encoding
+              when GZIP_ENCODING
+                @gzip = true
+                @headers[CONTENT_ENCODING_KEY] = GZIP_ENCODING
+                break
+
+              # "deflate" has issues: https://zlib.net/zlib_faq.html#faq39
+              #
+              when DEFLATE_ENCODING
+                @deflate = true
+                @headers[CONTENT_ENCODING_KEY] = DEFLATE_ENCODING
+                break
+
+              end
+            end
           end
         end
 
@@ -57,7 +84,7 @@ module H2
         # @param [String] data: data associated with this event
         #
         def event name:, data:
-          e = EVENT_TEMPL % [name, data]
+          e = handle_content_encoding(EVENT_TEMPL % [name, data])
           @parser.data e, end_stream: false
         end
 
@@ -68,7 +95,7 @@ module H2
         # @param [String] data associated with this event
         #
         def data str
-          d = DATA_TEMPL % str
+          d = handle_content_encoding(DATA_TEMPL % str)
           @parser.data d, end_stream: false
         end
 
@@ -83,6 +110,16 @@ module H2
         #
         def closed?
           @closed
+        end
+
+        private
+
+        # content-encoding helper for #event and #data methods
+        #
+        def handle_content_encoding str
+          str = ::Zlib.gzip str if @gzip
+          str = ::Zlib.deflate str if @deflate
+          str
         end
 
       end

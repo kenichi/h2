@@ -23,6 +23,7 @@ module H2
           @body    = body
           @status  = status
 
+          check_accept_encoding
           init_content_length
         end
 
@@ -64,6 +65,30 @@ module H2
           end
         rescue ::HTTP2::Error::StreamClosed
           stream.log :warn, "stream closed early by client"
+        end
+
+        # checks the request for accept-encoding headers and processes body
+        # accordingly
+        #
+        def check_accept_encoding
+          if accept = @stream.request.headers[ACCEPT_ENCODING_KEY]
+            accept.split(',').map(&:strip).each do |encoding|
+              case encoding
+              when GZIP_ENCODING
+                @body = ::Zlib.gzip @body
+                @headers[CONTENT_ENCODING_KEY] = GZIP_ENCODING
+                break
+
+              # "deflate" has issues: https://zlib.net/zlib_faq.html#faq39
+              #
+              when DEFLATE_ENCODING
+                @body = ::Zlib.deflate @body
+                @headers[CONTENT_ENCODING_KEY] = DEFLATE_ENCODING
+                break
+
+              end
+            end
+          end
         end
 
         def to_s

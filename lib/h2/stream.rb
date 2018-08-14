@@ -33,6 +33,8 @@ module H2
       @stream  = stream
 
       @eventsource = false
+      @gzip        = false
+      @deflate     = false
 
       init_blocking
       yield self if block_given?
@@ -104,6 +106,10 @@ module H2
         loop do
           event = @body.pop
           break if event == :close
+
+          event = ::Zlib.gunzip event if @gzip
+          event = ::Zlib.inflate event if @deflate
+
           yield event
         end
       else
@@ -119,7 +125,14 @@ module H2
         @parent.add_push self if @parent && push?
         @client.last_stream = self
         @closed = true
-        @body << :close if @eventsource
+
+        if @eventsource
+          @body << :close
+        else
+          @body = Zlib.gunzip @body if @gzip
+          @body = Zlib.inflate @body if @deflate
+        end
+
         unblock!
         on :close
       end
@@ -130,7 +143,6 @@ module H2
 
       @stream.on(:data) do |d|
         on :data, d
-        unblock! if @eventsource
         @body << d
       end
     end
@@ -139,6 +151,7 @@ module H2
     #
     def add_headers h
       check_event_source h
+      check_content_encoding h
       h = Hash[h]
       on :headers, h
       @headers.merge! h
@@ -151,6 +164,19 @@ module H2
       if h.any? {|e| e[0] == CONTENT_TYPE_KEY && e[1] == EVENT_SOURCE_CONTENT_TYPE }
         @eventsource = true
         @body = Queue.new
+        unblock!
+      end
+    end
+
+    # checks for content encoding headers and sets flags
+    #
+    def check_content_encoding h
+      return if @gzip or @deflate
+      h.each do |e|
+        if e[0] == CONTENT_ENCODING_KEY
+          @gzip = true if e[1] == GZIP_ENCODING
+          @deflate = true if e[1] == DEFLATE_ENCODING
+        end
       end
     end
 

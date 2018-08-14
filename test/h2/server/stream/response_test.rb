@@ -2,11 +2,20 @@ require File.expand_path '../../../../test_helper', __FILE__
 
 class ResponseTest < Minitest::Test
 
+  def stream
+    s = Minitest::Mock.new
+    s.expect :request, request
+  end
+
+  def request
+    r = Minitest::Mock.new
+    r.expect :headers, {}
+  end
+
   def test_construction_with_integer_status
-    stream = Object.new
-    r = H2::Server::Stream::Response.new stream: stream,
+    s = stream
+    r = H2::Server::Stream::Response.new stream: s,
                                          status: 200
-    assert_equal stream, r.stream
     assert_equal 200, r.status
     assert_instance_of Hash, r.headers
     assert_equal 1, r.headers.length
@@ -17,18 +26,18 @@ class ResponseTest < Minitest::Test
   end
 
   def test_constructtion_with_string_body
-    r = H2::Server::Stream::Response.new stream: nil, status: 200, body: 'ohai'
+    r = H2::Server::Stream::Response.new stream: stream, status: 200, body: 'ohai'
     assert_equal 'ohai', r.body
     assert_equal 4, r.headers['content-length']
   end
 
   def test_construction_with_headers
-    r = H2::Server::Stream::Response.new stream: nil, status: 301, headers: {location: '/redirected'}
+    r = H2::Server::Stream::Response.new stream: stream, status: 301, headers: {location: '/redirected'}
     assert_equal '/redirected', r.headers[:location]
   end
 
   def test_respond_on_stream
-    s = Minitest::Mock.new
+    s = stream
     expected_headers = {
       ':status'        => '200',
       'content-type'   => 'text/plain',

@@ -8,8 +8,8 @@ class EventSourceTest < Minitest::Test
     request = Minitest::Mock.new
 
     stream.expect :stream, parser
-    stream.expect :request, request
-    request.expect :headers, {'accept' => 'text/event-stream'}
+    2.times { stream.expect :request, request }
+    2.times { request.expect :headers, {'accept' => 'text/event-stream'}}
     parser.expect :headers, nil, [{':status' => '200', 'content-type' => 'text/event-stream'}]
 
     r = H2::Server::Stream::EventSource.new stream: stream

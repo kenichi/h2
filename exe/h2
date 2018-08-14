@@ -19,10 +19,14 @@ end # }}}
 options = {
   body: nil,
   block: false,
+  celluloid: false,
+  concurrent: false,
   debug: false,
+  deflate: false,
   headers: {},
   goaway: false,
-  method: :get,
+  gzip: false,
+  method: nil,
   tls: {},
   verbose: false
 }
@@ -43,20 +47,28 @@ OptionParser.new do |o|
   end
 
   o.on '--celluloid', 'use celluloid actor pool' do
+    raise ArgumentError, '--celluloid and --concurrent are mutually exclusive' if options[:concurrent]
     require 'h2/client/celluloid'
+    options[:celluloid] = true
   end
 
   o.on '--concurrent', 'use concurrent-ruby thread pool' do
+    raise ArgumentError, '--celluloid and --concurrent are mutually exclusive' if options[:celluloid]
     require 'h2/client/concurrent'
+    options[:concurrent] = true
   end
 
-  o.on '-d', '--data [DATA]', String, 'post body data' do |d|
-    options[:method] = :post if options[:method].nil?
+  o.on '-d', '--data [DATA]', String, 'post body data (implies POST, override with -X)' do |d|
+    options[:method] ||= :post
     options[:body] = d
   end
 
   o.on '--debug', 'debug output' do
     options[:debug] = true
+  end
+
+  o.on '--deflate', 'request "deflate" content-encoding' do
+    options[:deflate] = true
   end
 
   o.on '-sse', '--eventsource', 'send event-stream headers and print messages as they arrive' do
@@ -67,15 +79,19 @@ OptionParser.new do |o|
     options[:goaway] = true
   end
 
+  o.on '--gzip', 'request "gzip" content-encoding' do
+    options[:gzip] = true
+  end
+
   o.on '-h', '--help', 'show this help/usage' do
     puts o
     exit
   end
 
   o.on '-H [VALUE]', '--header [VALUE]', String, 'include header in request (format: "key: value")' do |h|
-    warn "psuedo-headers not supported via CLI" if h[0] == ':'
+    raise ArgumentError, "psuedo-headers not supported via CLI" if h[0] == ':'
     kv = h.split(':').map &:strip
-    options[:headers][kv[0]] = kv[1]
+    options[:headers][kv[0].downcase] = kv[1]
   end
 
   o.on '-v', '--verbose', 'turn on verbosity' do
@@ -98,6 +114,9 @@ OptionParser.new do |o|
 
 end.parse!
 
+# start with nil, allow -d and/or -X to set, but default to get
+options[:method] ||= :get
+
 # }}}
 
 # --- parse URL {{{
@@ -118,14 +137,20 @@ client[:tls] = options[:tls] unless options[:tls].empty?
 
 c = H2::Client.new **client do |c|
   if options[:debug]
-    c.client.on(:frame_received) {|f| puts "<< #{f.inspect}" }
-    c.client.on(:frame_sent)     {|f| puts ">> #{f.inspect}" }
+    c.client.on(:frame_received) {|f| STDERR.puts "<< #{f.inspect}" }
+    c.client.on(:frame_sent)     {|f| STDERR.puts ">> #{f.inspect}" }
   end
 end
 
 # }}}
 
 # --- build & send request {{{
+
+ce = []
+ce << :gzip if options[:gzip]
+ce << :deflate if options[:deflate]
+ce = ce.join ','
+options[:headers][H2::ACCEPT_ENCODING_KEY] = ce unless ce.empty?
 
 request = {
   body: options[:body],
@@ -138,7 +163,7 @@ if options[:verbose]
     method: options[:method],
     path: url.request_uri,
     headers: request[:headers]
-  ).each {|k,v| puts ">> #{k}: #{v}".green}
+  ).each {|k,v| STDERR.puts ">> #{k}: #{v}" }
 end
 
 s = c.__send__ options[:method], **request
@@ -148,7 +173,7 @@ s = c.__send__ options[:method], **request
 # --- print response & close {{{
 
 if options[:verbose]
-  s.headers.each {|k,v| puts "<< #{k}: #{v}".yellow}
+  s.headers.each {|k,v| STDERR.puts "<< #{k}: #{v}" }
 end
 
 if s.eventsource?
@@ -159,7 +184,7 @@ end
 
 c.block! if options[:block] or !s.pushes.empty?
 s.pushes.each do |p|
-  puts "push promise: #{p.headers[':path']}"
+  STDERR.puts "push promise: #{p.headers[':path']}"
 end
 
 c.goaway if options[:goaway]

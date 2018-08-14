@@ -3,6 +3,8 @@
 require 'http/2'
 require 'logger'
 require 'uri'
+require 'zlib'
+
 require 'h2/version'
 
 module H2
@@ -29,8 +31,13 @@ module H2
     :put
   ]
 
+  ACCEPT_ENCODING_KEY       = 'accept-encoding'
+  CONTENT_ENCODING_KEY      = 'content-encoding'
   CONTENT_TYPE_KEY          = 'content-type'
+
   EVENT_SOURCE_CONTENT_TYPE = 'text/event-stream'
+  GZIP_ENCODING             = 'gzip'
+  DEFLATE_ENCODING          = 'deflate'
 
   Logger = ::Logger.new STDOUT
 
@@ -172,3 +179,26 @@ end
 
 require 'h2/client'
 require 'h2/stream'
+
+if RUBY_VERSION < '2.4.0'
+  module Zlib
+    class << self
+      def gunzip string
+        sio = StringIO.new string
+        gz = Zlib::GzipReader.new sio, encoding: Encoding::ASCII_8BIT
+        gz.read
+      ensure
+        gz && gz.close
+      end
+
+      def gzip string, level: nil, strategy: nil
+        sio = StringIO.new
+        sio.binmode
+        gz = Zlib::GzipWriter.new sio, level, strategy
+        gz.write string
+        gz.close
+        sio.string
+      end
+    end
+  end
+end
