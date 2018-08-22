@@ -1,6 +1,7 @@
 module H2
   class Server
     class PushPromise
+      include HeaderStringifier
 
       GET    = 'GET'
       STATUS = '200'
@@ -25,7 +26,7 @@ module H2
         @push_headers = {
           STATUS_KEY         => STATUS,
           CONTENT_LENGTH_KEY => @content_length
-        }.merge headers
+        }.merge stringify_headers(headers)
 
         @fsm = FSM.new
       end

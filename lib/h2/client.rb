@@ -5,6 +5,7 @@ require 'h2/client/tcp_socket'
 module H2
   class Client
     include Blockable
+    include HeaderStringifier
     include On
 
     PARSER_EVENTS = [
@@ -150,18 +151,6 @@ module H2
       s.headers h, end_stream: body.nil?
       s.data body if body
       stream
-    end
-
-    # mutates the given hash into +String+ keys and values
-    #
-    # @param [Hash] hash the headers +Hash+ to stringify
-    #
-    def stringify_headers hash
-      hash.keys.each do |key|
-        hash[key] = hash[key].to_s unless String === hash[key]
-        hash[key.to_s] = hash.delete key unless String === key
-      end
-      hash
     end
 
     # builds headers +Hash+ with appropriate ordering
