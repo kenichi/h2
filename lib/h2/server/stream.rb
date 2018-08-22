@@ -221,4 +221,4 @@ end
 require 'h2/server/stream/event_source'
 require 'h2/server/stream/request'
 require 'h2/server/stream/response'
-require 'h2/server/push_promise'
+require 'h2/server/stream/push_promise'
