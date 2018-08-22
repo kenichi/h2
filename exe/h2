@@ -21,7 +21,6 @@ options = {
   block: false,
   celluloid: false,
   concurrent: false,
-  debug: false,
   deflate: false,
   headers: {},
   goaway: false,
@@ -64,7 +63,7 @@ OptionParser.new do |o|
   end
 
   o.on '--debug', 'debug output' do
-    options[:debug] = true
+    H2::Client.include H2::FrameDebugger
   end
 
   o.on '--deflate', 'request "deflate" content-encoding' do
@@ -135,12 +134,7 @@ client = {
 
 client[:tls] = options[:tls] unless options[:tls].empty?
 
-c = H2::Client.new **client do |c|
-  if options[:debug]
-    c.client.on(:frame_received) {|f| STDERR.puts "<< #{f.inspect}" }
-    c.client.on(:frame_sent)     {|f| STDERR.puts ">> #{f.inspect}" }
-  end
-end
+c = H2::Client.new **client
 
 # }}}
 
