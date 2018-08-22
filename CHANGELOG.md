@@ -1,6 +1,11 @@
 h2 changelog
 ============
 
+### 0.8.2 22 aug 2018
+
+* add gzip/deflate content-encoding support
+* add SSE '-s' option and other CLI improvments
+
 ### 0.8.1 11 aug 2018
 
 * update rake / bundler dep versions
