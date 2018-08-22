@@ -1,8 +1,3 @@
-require 'h2/server/stream/event_source'
-require 'h2/server/stream/request'
-require 'h2/server/stream/response'
-require 'h2/server/push_promise'
-
 module H2
   class Server
     class Stream
@@ -187,6 +182,43 @@ module H2
 
     end
 
+    module ContentEncoder
+
+      # checks the request for accept-encoding headers and processes body
+      # accordingly
+      #
+      def check_accept_encoding
+        if accept = @stream.request.headers[ACCEPT_ENCODING_KEY]
+          accept.split(',').map(&:strip).each do |encoding|
+            case encoding
+            when GZIP_ENCODING
+              if @stream.connection.server.options[:gzip]
+                @body = ::Zlib.gzip @body
+                @headers[CONTENT_ENCODING_KEY] = GZIP_ENCODING
+                break
+              end
+
+            # "deflate" has issues: https://zlib.net/zlib_faq.html#faq39
+            #
+            when DEFLATE_ENCODING
+              if @stream.connection.server.options[:deflate]
+                @body = ::Zlib.deflate @body
+                @headers[CONTENT_ENCODING_KEY] = DEFLATE_ENCODING
+                break
+              end
+
+            end
+          end
+        end
+      end
+
+    end
+
     class StreamError < StandardError; end
   end
 end
+
+require 'h2/server/stream/event_source'
+require 'h2/server/stream/request'
+require 'h2/server/stream/response'
+require 'h2/server/push_promise'

@@ -1,7 +1,6 @@
 source 'https://rubygems.org'
 
 gemspec
-# gem 'http-2', path: '../http-2'
 
 group :concurrent_ruby do
   gem 'concurrent-ruby'

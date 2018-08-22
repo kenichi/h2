@@ -1,6 +1,7 @@
 module H2
   class Server
     class PushPromise
+      include ContentEncoder
       include HeaderStringifier
 
       GET    = 'GET'
@@ -13,6 +14,7 @@ module H2
       def initialize path:, headers: {}, body: nil
         @path = path
         @body = body
+        @headers = headers
 
         @promise_headers = {
           METHOD_KEY    => GET,
@@ -20,13 +22,6 @@ module H2
           PATH_KEY      => @path,
           SCHEME_KEY    => headers.delete(SCHEME_KEY)
         }
-
-        @content_length = @body.bytesize.to_s
-
-        @push_headers = {
-          STATUS_KEY         => STATUS,
-          CONTENT_LENGTH_KEY => @content_length
-        }.merge stringify_headers(headers)
 
         @fsm = FSM.new
       end
@@ -36,9 +31,15 @@ module H2
       #
       def make_on stream
         return unless @fsm.state == :init
-        @stream = stream
+        @stream  = stream
+        @headers = {STATUS_KEY => STATUS}.merge stringify_headers(@headers)
+
+        check_accept_encoding
+        @content_length = @body.bytesize.to_s
+        @headers.merge! CONTENT_LENGTH_KEY => @content_length
+
         @stream.stream.promise(@promise_headers, end_headers: false) do |push|
-          push.headers @push_headers
+          push.headers @headers
           @push_stream = push
           @push_stream.on(:close){|err| cancel! if err == :cancel}
         end

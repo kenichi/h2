@@ -11,18 +11,23 @@ module H2
   class Server
     include Celluloid::IO
 
-    TCP_DEFAULT_BACKLOG = 100
+    DEFAULT_OPTIONS = {
+      backlog: 100,
+      deflate: true,
+      gzip: true
+    }
 
     execute_block_on_receiver :initialize
     finalizer :shutdown
 
+    attr_reader :options
+
     def initialize server, **options, &on_connection
       @server        = server
-      @options       = options
+      @options       = DEFAULT_OPTIONS.merge options
       @on_connection = on_connection
 
-      backlog = options.fetch :backlog, TCP_DEFAULT_BACKLOG
-      @server.listen backlog
+      @server.listen @options[:backlog]
       async.run
     end
 

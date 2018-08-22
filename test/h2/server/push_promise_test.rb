@@ -95,4 +95,60 @@ class PushPromiseTest < H2::WithServerHandlerTest
     raise ex if ex
   end
 
+  def test_gzip_push_promise
+    2.times { @valid.expect :tap, nil }
+
+    handler = proc do |stream|
+      stream.on_complete do
+        stream.connection.goaway
+        @valid.tap
+      end
+      stream.push_promise path: '/push', body: 'promise'
+      stream.respond status: 200
+    end
+
+    expected_body = ::Zlib.gzip 'promise'
+
+    with_server handler do
+      s = H2.get url: @url, headers: {H2::ACCEPT_ENCODING_KEY => 'gzip'}, tls: false
+      s.client.block!
+      assert_equal 1, s.pushes.length
+      p = s.pushes.first
+      assert p.headers.has_key?(H2::CONTENT_ENCODING_KEY)
+      assert_equal 'gzip', p.headers[H2::CONTENT_ENCODING_KEY]
+      assert_equal expected_body.length.to_s, p.headers[H2::CONTENT_LENGTH_KEY]
+      @valid.tap
+    end
+
+    @valid.verify
+  end
+
+  def test_deflate_push_promise
+    2.times { @valid.expect :tap, nil }
+
+    handler = proc do |stream|
+      stream.on_complete do
+        stream.connection.goaway
+        @valid.tap
+      end
+      stream.push_promise path: '/push', body: 'promise'
+      stream.respond status: 200
+    end
+
+    expected_body = ::Zlib.deflate 'promise'
+
+    with_server handler do
+      s = H2.get url: @url, headers: {H2::ACCEPT_ENCODING_KEY => 'deflate'}, tls: false
+      s.client.block!
+      assert_equal 1, s.pushes.length
+      p = s.pushes.first
+      assert p.headers.has_key?(H2::CONTENT_ENCODING_KEY)
+      assert_equal 'deflate', p.headers[H2::CONTENT_ENCODING_KEY]
+      assert_equal expected_body.length.to_s, p.headers[H2::CONTENT_LENGTH_KEY]
+      @valid.tap
+    end
+
+    @valid.verify
+  end
+
 end

@@ -43,4 +43,72 @@ class EventSourceTest < Minitest::Test
     end
   end
 
+  def test_gzip_event
+    conn = Minitest::Mock.new
+    server = Minitest::Mock.new
+    stream  = Minitest::Mock.new
+    parser  = Minitest::Mock.new
+    request = Minitest::Mock.new
+
+    stream.expect :connection, conn
+    conn.expect :server, server
+    server.expect :options, H2::Server::DEFAULT_OPTIONS
+
+    stream.expect :stream, parser
+    2.times { stream.expect :request, request }
+    2.times { request.expect :headers, {
+      'accept' => 'text/event-stream',
+      H2::ACCEPT_ENCODING_KEY => H2::GZIP_ENCODING
+    }}
+    parser.expect :headers, nil, [{
+      ':status' => '200',
+      'content-type' => 'text/event-stream',
+      H2::CONTENT_ENCODING_KEY => H2::GZIP_ENCODING
+    }]
+
+    r = H2::Server::Stream::EventSource.new stream: stream
+
+    expected_data = ::Zlib.gzip "event: foo\ndata: bar\n\n"
+    parser.expect :data, nil, [expected_data, {end_stream: false}]
+    r.event name: 'foo', data: 'bar'
+
+    stream.verify
+    request.verify
+    parser.verify
+  end
+
+  def test_deflate_event
+    conn = Minitest::Mock.new
+    server = Minitest::Mock.new
+    stream  = Minitest::Mock.new
+    parser  = Minitest::Mock.new
+    request = Minitest::Mock.new
+
+    stream.expect :connection, conn
+    conn.expect :server, server
+    server.expect :options, H2::Server::DEFAULT_OPTIONS
+
+    stream.expect :stream, parser
+    2.times { stream.expect :request, request }
+    2.times { request.expect :headers, {
+      'accept' => 'text/event-stream',
+      H2::ACCEPT_ENCODING_KEY => H2::DEFLATE_ENCODING
+    }}
+    parser.expect :headers, nil, [{
+      ':status' => '200',
+      'content-type' => 'text/event-stream',
+      H2::CONTENT_ENCODING_KEY => H2::DEFLATE_ENCODING
+    }]
+
+    r = H2::Server::Stream::EventSource.new stream: stream
+
+    expected_data = ::Zlib.deflate "event: foo\ndata: bar\n\n"
+    parser.expect :data, nil, [expected_data, {end_stream: false}]
+    r.event name: 'foo', data: 'bar'
+
+    stream.verify
+    request.verify
+    parser.verify
+  end
+
 end

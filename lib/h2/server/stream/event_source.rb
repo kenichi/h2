@@ -51,16 +51,20 @@ module H2
             accept.split(',').map(&:strip).each do |encoding|
               case encoding
               when GZIP_ENCODING
-                @gzip = true
-                @headers[CONTENT_ENCODING_KEY] = GZIP_ENCODING
-                break
+                if @stream.connection.server.options[:gzip]
+                  @gzip = true
+                  @headers[CONTENT_ENCODING_KEY] = GZIP_ENCODING
+                  break
+                end
 
               # "deflate" has issues: https://zlib.net/zlib_faq.html#faq39
               #
               when DEFLATE_ENCODING
-                @deflate = true
-                @headers[CONTENT_ENCODING_KEY] = DEFLATE_ENCODING
-                break
+                if @stream.connection.server.options[:deflate]
+                  @deflate = true
+                  @headers[CONTENT_ENCODING_KEY] = DEFLATE_ENCODING
+                  break
+                end
 
               end
             end
@@ -84,7 +88,7 @@ module H2
         # @param [String] data: data associated with this event
         #
         def event name:, data:
-          e = handle_content_encoding(EVENT_TEMPL % [name, data])
+          e = encode_content(EVENT_TEMPL % [name, data])
           @parser.data e, end_stream: false
         end
 
@@ -95,7 +99,7 @@ module H2
         # @param [String] data associated with this event
         #
         def data str
-          d = handle_content_encoding(DATA_TEMPL % str)
+          d = encode_content(DATA_TEMPL % str)
           @parser.data d, end_stream: false
         end
 
@@ -116,7 +120,7 @@ module H2
 
         # content-encoding helper for #event and #data methods
         #
-        def handle_content_encoding str
+        def encode_content str
           str = ::Zlib.gzip str if @gzip
           str = ::Zlib.deflate str if @deflate
           str
