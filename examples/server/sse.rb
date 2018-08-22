@@ -147,7 +147,7 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
       stream.respond status: 404,
                      body: "should have been pushed..."
 
-    else
+    when '/'
 
       # initiate a push promise sub-stream, and queue the "keep" handler.
       # since a push promise may be canceled, we queue the handler on the server reactor,
@@ -165,6 +165,9 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
       # see +H2::Server::Stream#respond+
       #
       stream.respond status: 200, body: data[:html]
+
+    else
+      stream.respond status: 404
 
     end
   end

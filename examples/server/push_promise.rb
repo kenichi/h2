@@ -87,7 +87,7 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
     #
     # see +H2::Server::Stream#request+
     #
-    if stream.request.path == '/favicon.ico'
+    if stream.request.path != '/'
 
       # since this is a TLS-enabled server, we could actually test it with a
       # real browser, which will undoubtedly request /favicon.ico.
@@ -133,9 +133,9 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
       # have this +H2::Server::PushPromise+ initiate the sub-stream on this
       # stream by sending initial headers.
       #
-      # see +H2::Server::PushPromise#make_on+
+      # see +H2::Server::Stream::#make_promise+
       #
-      js_promise.make_on stream
+      stream.make_promise js_promise
 
       # respond with 200 and HTML body
       #
@@ -150,8 +150,8 @@ s = H2::Server::HTTPS.new host: addr, port: port, sni: sni do |connection|
       # but for `js_promise`, we must keep it ourselves. in this case, we keep
       # it "synchronously", but we may also call `#keep_async` to queue it.
       #
-      # see +H2::Server::PushPromise#keep+
-      # see +H2::Server::PushPromise#keep_async+
+      # see +H2::Server::Stream::PushPromise#keep+
+      # see +H2::Server::Stream::PushPromise#keep_async+
       #
       js_promise.keep
 

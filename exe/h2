@@ -71,7 +71,7 @@ OptionParser.new do |o|
     options[:deflate] = true
   end
 
-  o.on '-sse', '--eventsource', 'send event-stream headers and print messages as they arrive' do
+  o.on '-s', '--sse', 'send event-stream headers and print messages as they arrive' do
     options[:headers]['accept'] = H2::EVENT_SOURCE_CONTENT_TYPE
   end
 
